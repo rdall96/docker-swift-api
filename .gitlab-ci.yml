@@ -1,0 +1,38 @@
+stages:
+  - test
+  - release
+
+
+variables:
+  dev_tag: '/^dev-\d.\d.\d$/'
+  release_tag: '/^\d.\d.\d$/'
+
+
+# run a test build
+test_build:
+  stage: test
+  image: swift:5.8-jammy
+  script:
+    - swift package resolve
+    - swift build -c release --static-swift-stdlib
+  tags:
+    - test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+# Create a new release
+create_release:
+  stage: release
+  image: alpine:latest
+  script:
+    - apk update
+    - apk add curl
+    - curl --location --output /usr/local/bin/release-cli "https://gitlab.com/api/v4/projects/gitlab-org%2Frelease-cli/packages/generic/release-cli/latest/release-cli-linux-amd64"
+    - chmod +x /usr/local/bin/release-cli
+    - echo 'Creating release $CI_COMMIT_TAG'
+  rules:
+    - if: $CI_COMMIT_TAG =~ $release_tag
+  release:
+    tag_name: $CI_COMMIT_TAG
+    name: 'Release $CI_COMMIT_TAG'
+    description: 'Automated release (maintainer to fill in details)'

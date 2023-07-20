@@ -1,0 +1,58 @@
+//
+//  Version.swift
+//  
+//
+//  Created by Ricky Dall'Armellina on 7/20/23.
+//
+
+import Foundation
+
+extension Docker {
+    public struct Version {
+        public let major: UInt
+        public let minor: UInt
+        public let patch: UInt?
+        
+        init(major: UInt, minor: UInt, patch: UInt? = nil) {
+            self.major = major
+            self.minor = minor
+            self.patch = patch
+        }
+        
+        init?(from string: String) {
+            let components = string.split(separator: ".")
+                .compactMap { String($0) }
+                .compactMap { UInt($0) }
+            guard components.count >= 2 else { return nil }
+            self.init(
+                major: components[0],
+                minor: components[1],
+                patch: components.count == 3 ? components[2] : nil
+            )
+        }
+        
+        /// A textual representation of the version data
+        public var description: String {
+            "\(major).\(minor)\(patch != nil ? ".\(patch!)" : "")"
+        }
+    }
+}
+
+extension Docker.Version: Decodable {
+    /*
+     24.0.2
+     */
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let string = try container.decode(String.self)
+        if let version = Docker.Version(from: string) {
+            self = version
+        }
+        else {
+            throw DecodingError.dataCorrupted(.init(
+                codingPath: [], debugDescription: "Found invalid version format"
+            ))
+        }
+    }
+}
