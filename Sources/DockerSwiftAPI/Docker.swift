@@ -35,12 +35,14 @@ public enum Docker {
     
     /// Create a new container
     public static func create(_ specs: ContainerSpec, from image: Image) async throws -> Container {
+        try await pull(image: image)
         let output = try await Shell.docker("create \(specs.options.joined(separator: " ")) \(image.description)")
         return try .init(output, name: specs.name)
     }
     
     /// Create and run a new container from an image
     public static func run(image: Image, with specs: ContainerSpec, detached: Bool = false) async throws -> Container {
+        try await pull(image: image)
         let output = try await Shell.docker("run \(detached ? "--detach" : "") \(specs.options.joined(separator: " ")) \(image.description)")
         return try .init(output, name: specs.name)
     }

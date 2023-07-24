@@ -63,9 +63,7 @@ extension Docker {
         }
         
         var options: [String] {
-            var args: [String] = [
-                "--quiet" // always use this flag to avoid showing image pull output
-            ]
+            var args = [String]()
             
             if attachStdIn {
                 args.append("--attach STDIN")
