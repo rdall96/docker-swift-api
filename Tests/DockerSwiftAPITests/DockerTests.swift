@@ -90,7 +90,7 @@ final class DockerTests: XCTestCase {
     
     func testRunContainer() async throws {
         let image = Docker.Image("hello-world")
-        let container = try await Docker.run(image: image, with: .init(), detached: true)
+        let container = try await Docker.run(image: image, with: .init())
         createdContainers.append(container)
         pulledImages.append(image)
         try await Docker.stop(container)
@@ -159,8 +159,7 @@ final class DockerTests: XCTestCase {
             image: .init(repository: "pihole", name: "pihole")
         )
         try await Docker.start(container)
-        let output = try await Docker.exec("echo Hello World!", in: container)
-        XCTAssertEqual(output, "Hello World!")
+        try await Docker.exec("echo Hello World!", in: container)
     }
     
     func testExecCommandInStoppedContainer() async throws {
@@ -225,6 +224,46 @@ final class DockerTests: XCTestCase {
         catch is DockerError {}
         catch {
             XCTFail("Unexpected error: \(error)")
+        }
+    }
+    
+    // MARK: - Build tests
+    
+    func testBuildHappyPath() async throws {
+        // setup
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("docker-swift-api-tests")
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        let dockerFile = """
+        FROM alpine:latest
+        ARG PACKAGE
+        RUN apk update \
+            && apk add ${PACKAGE}
+        """
+        try dockerFile.write(
+            to: tempDir.appendingPathComponent("Dockerfile"),
+            atomically: true,
+            encoding: .utf8
+        )
+        let tag = Docker.Image(name: "docker-swift-api-tests")
+        
+        // build
+        let result = try await Docker.build(
+            path: tempDir,
+            tag: tag,
+            buildArgs: [
+                .init(key: "PACKAGE", value: "bash")
+            ]
+        )
+        // add the create image to the tracked list
+        self.pulledImages.append(tag)
+        
+        print(result.output)
+        switch result.status {
+        case .success:
+            break
+        case .failed(let error):
+            throw error
         }
     }
     

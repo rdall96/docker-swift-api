@@ -1,6 +1,6 @@
 //
 //  Shell.swift
-//  
+//
 //
 //  Created by Ricky Dall'Armellina on 7/19/23.
 //
@@ -12,13 +12,14 @@ enum Shell {
     
     private static var env = Env()
     
+    static func run(_ command: String) -> Commands.Result {
+        Commands.Bash.run(.init(command), environment: .global)
+    }
+    
     @discardableResult
     static func run(_ command: String) async throws -> String {
         try await withCheckedThrowingContinuation { continuation in
-            let result = Commands.Bash.run(
-                .init(command),
-                environment: .global
-            )
+            let result = run(command)
             if result.isFailure {
                 continuation.resume(throwing: DockerError.systemError(command: command, output: result.errorOutput))
                 return
@@ -65,6 +66,14 @@ enum Shell {
     @discardableResult
     static func docker(_ command: String) async throws -> String {
         return try await Shell.run("\(try await dockerBin) \(command)")
+    }
+    
+    @_disfavoredOverload
+    static func docker(_ command: String) async throws -> Commands.Result {
+        let dockerBin = try await dockerBin
+        return await withUnsafeContinuation { continuation in
+            continuation.resume(returning: Shell.run("\(dockerBin) \(command)"))
+        }
     }
 }
 
