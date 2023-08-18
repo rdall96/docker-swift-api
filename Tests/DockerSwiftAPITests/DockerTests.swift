@@ -24,7 +24,7 @@ final class DockerTests: XCTestCase {
     // MARK: - Helpers
     
     private func createContainer(specs: Docker.ContainerSpec, image: Docker.Image) async throws -> Docker.Container {
-        let container = try await Docker.create(specs, from: image)
+        let container = try await Docker.create(specs, from: image, pull: true)
         createdContainers.append(container)
         pulledImages.append(image)
         return container
@@ -90,7 +90,7 @@ final class DockerTests: XCTestCase {
     
     func testRunContainer() async throws {
         let image = Docker.Image("hello-world")
-        let container = try await Docker.run(image: image, with: .init())
+        let container = try await Docker.run(image: image, with: .init(), pull: true)
         createdContainers.append(container)
         pulledImages.append(image)
         try await Docker.stop(container)
@@ -214,7 +214,7 @@ final class DockerTests: XCTestCase {
     
     func testContainerStatsDeleted() async throws {
         let image: Docker.Image = .init(repository: "pihole", name: "pihole")
-        let container = try await Docker.create(.init(), from: image)
+        let container = try await Docker.create(.init(), from: image, pull: true)
         pulledImages.append(image)
         try await Docker.remove(container: container)
         do {
@@ -224,6 +224,29 @@ final class DockerTests: XCTestCase {
         catch is DockerError {}
         catch {
             XCTFail("Unexpected error: \(error)")
+        }
+    }
+    
+    // MARK: - Volmue tests
+    
+    func testVolumeModel() async throws {
+        let output = """
+        {"Availability":"N/A","Driver":"local","Group":"N/A","Labels":"com.docker.volume.anonymous=","Links":"N/A","Mountpoint":"/var/lib/docker/volumes/f84e22d8d0e2f705afb48f2989b875a5936fef001f044691ff5e548694621224/_data","Name":"f84e22d8d0e2f705afb48f2989b875a5936fef001f044691ff5e548694621224","Scope":"local","Size":"N/A","Status":"N/A"}
+        {"Availability":"N/A","Driver":"local","Group":"N/A","Labels":"","Links":"N/A","Mountpoint":"/var/lib/docker/volumes/test_volume/_data","Name":"test_volume","Scope":"local","Size":"N/A","Status":"N/A"}
+        """
+        let volumes = Docker.Volume.volumes(from: output)
+        XCTAssertFalse(volumes.isEmpty)
+        XCTAssertEqual(volumes.last, .init(name: "test_volume"))
+    }
+    
+    func testVolumes() async throws {
+        let volumeNames: [String] = ["volume_1", "volume_2", "volume_3"]
+        var createdVolumes = [Docker.Volume]()
+        for volumeName in volumeNames {
+            createdVolumes.append(try await Docker.createVolume(name: volumeName))
+        }
+        for localVolume in try await Docker.volumes {
+            XCTAssertTrue(createdVolumes.contains(localVolume))
         }
     }
     

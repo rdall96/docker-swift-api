@@ -20,3 +20,14 @@
 - Added API to tag existing images with `Docker.tag(_:source:)`.
 - Added API to push images to a remote repository with `Docker.push(_:)`.
 - `Docker.exec` no longer returns the output of the command (because it never worked).
+
+## [1.2.0](https://gitlab.com/rdall96/docker-swift-api/-/releases/1.2.0) (2023-08-20)
+
+**Changed**
+- Ability to specify if the image should be pulled before creating and/or running a container.
+- `ContainerSpec.PortMapping` object to specify more properties about the port, like the port type (i.e.: TCP, UDP, etc...).
+- `ContainerSpec.EnvironmentVariable` object to represent environment variables passed to the contianer.
+- Docker volumes support to create volumes on the system, with APIs to list existing volumes and create new ones.
+- `ContainerSpec.VolumeMapping` object to represent volumes and paths mapped to the container.
+- `Docker.exec` now returns the command output.
+- Added `Registry` type to represent a remote Docke rserver registry. Used for `Docker.login(server:username:password:)`.

@@ -57,10 +57,13 @@ public enum Docker {
     /// - Parameters:
     ///     - specs: `ContainerSpec` object to define the properties of the container to create.
     ///     - image: Image to create the container from.
+    ///     - pull: Pull the image
     ///
     /// - Returns: A `Container` object representing the newly created container.
-    public static func create(_ specs: ContainerSpec, from image: Image) async throws -> Container {
-        try await pull(image: image)
+    public static func create(_ specs: ContainerSpec, from image: Image, pull: Bool = false) async throws -> Container {
+        if pull {
+            try await self.pull(image: image)
+        }
         let output = try await Shell.docker("create \(specs.options.joined(separator: " ")) \(image.description)")
         return try .init(output, name: specs.name)
     }
@@ -70,10 +73,13 @@ public enum Docker {
     /// - Parameters:
     ///     - image: Image to create the container from.
     ///     - specs: `ContainerSpec` object to define the properties of the container to create.
+    ///     - pull: Pull the image
     ///
     /// - Returns: A `Container` object representing the newly created container.
-    public static func run(image: Image, with specs: ContainerSpec) async throws -> Container {
-        try await pull(image: image)
+    public static func run(image: Image, with specs: ContainerSpec, pull: Bool = false) async throws -> Container {
+        if pull {
+            try await self.pull(image: image)
+        }
         let output = try await Shell.docker("run --detach \(specs.options.joined(separator: " ")) \(image.description)")
         return try .init(output, name: specs.name)
     }
@@ -139,6 +145,7 @@ public enum Docker {
     ///     - ttry: Allocate a pseudo-TTY.
     ///     - user: Username or UID (format: "<name|uid>[:<group|gid>]").
     ///
+    /// - Returns: The output of the command
     @discardableResult
     public static func exec(
         _ command: String,
@@ -147,7 +154,7 @@ public enum Docker {
         interactive: Bool = false,
         tty: Bool = false,
         user: String? = nil
-    ) async throws {
+    ) async throws -> String {
         var options: [String] = [
             "--detach",
         ]
@@ -163,7 +170,7 @@ public enum Docker {
         if let user {
             options.append("--user \(user):\(user)")
         }
-        try await Shell.docker("exec \(options.joined(separator: " ")) \(container.id) \(command)")
+        return try await Shell.docker("exec \(options.joined(separator: " ")) \(container.id) \(command)")
     }
     
     /// List containers.
@@ -208,6 +215,28 @@ public enum Docker {
         try await Shell.docker("logs \(tail != nil ? "--tail \(tail!)" : "") \(container.id)")
             .split(separator: "\n")
             .compactMap { String($0) }
+    }
+    
+    // MARK: - Volumes
+    
+    /// List volumes.
+    ///
+    /// - Returns: A list of `Volume` objects found on the current system.
+    public static var volumes: [Volume] {
+        get async throws {
+            Volume.volumes(from: try await Shell.docker("volume ls --format \"{{ json . }}\""))
+        }
+    }
+    
+    /// Create a volume.
+    ///
+    /// - Parameters:
+    ///     - name:  Name of the volume to create. If empty, a generated name will be assigned.
+    ///
+    /// - Returns: An object for the created `Volume`.
+    public static func createVolume(name: String? = nil) async throws -> Volume {
+        let output = try await Shell.docker("volume create \(name ?? "")")
+        return .init(name: output)
     }
     
     // MARK: - Build
@@ -273,13 +302,13 @@ public enum Docker {
     /// Log in to a registry.
     ///
     /// - Parameters:
-    ///     - server: `URL` of the server to log into.
+    ///     - server: Remote `Registry` to log into.
     ///     - username
     ///     - password
     ///
-    public static func login(server: URL, username: String, password: String) async throws {
+    public static func login(server: Registry = .dockerHub, username: String, password: String) async throws {
         do {
-            try await Shell.docker("login \(server.absoluteString) --username \(username) --password \(password)")
+            try await Shell.docker("login \(server.rawValue) --username \(username) --password \(password)")
         }
         catch {
             throw DockerError.loginFailed(error.localizedDescription)

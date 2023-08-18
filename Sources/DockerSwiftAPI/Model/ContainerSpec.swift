@@ -14,17 +14,17 @@ extension Docker {
         public let attachStdErr: Bool
         public let cpuCount: UInt?
         public let entrypoint: String?
-        public let environment: [String]
+        public let environment: [EnvironmentVariable]
         public let hostname: String?
         public let interactive: Bool
         public let labels: [String:String]
         public let memoryLimitBytes: UInt?
         public let reservedMemoryBytes: UInt?
         public let name: String?
-        public let ports: [UInt:UInt]
+        public let ports: [PortMapping]
         public let restartPolicy: RestartPolicy
         public let tty: Bool
-        public let volumes: [String:String]
+        public let volumes: [VolumeMapping]
         
         public init(
             attachStdIn: Bool = false,
@@ -32,17 +32,17 @@ extension Docker {
             attachStdErr: Bool = false,
             cpuCount: UInt? = nil,
             entrypoint: String? = nil,
-            environment: [String] = [],
+            environment: [EnvironmentVariable] = [],
             hostname: String? = nil,
             interactive: Bool = false,
             labels: [String:String] = [:],
             memoryLimitBytes: UInt? = nil,
             reservedMemoryBytes: UInt? = nil,
             name: String? = nil,
-            ports: [UInt:UInt] = [:],
+            ports: [PortMapping] = [],
             restartPolicy: RestartPolicy = .no,
             tty: Bool = false,
-            volumes: [String:String] = [:]
+            volumes: [VolumeMapping] = []
         ) {
             self.attachStdIn = attachStdIn
             self.attachStdOut = attachStdOut
@@ -81,7 +81,7 @@ extension Docker {
                 args.append("--entrypoint \(entrypoint)")
             }
             for env in environment {
-                args.append("--env \"\(env)\"")
+                args.append("--env \"\(env.description)\"")
             }
             if let hostname {
                 args.append("--hostname \(hostname)")
@@ -102,17 +102,67 @@ extension Docker {
                 args.append("--name \(name)")
             }
             for port in ports {
-                args.append("--publish \(port.key):\(port.value)")
+                args.append("--publish \(port.description)")
             }
             args.append("--restart \(restartPolicy.value)")
             if tty {
                 args.append("--tty")
             }
             for volume in volumes {
-                args.append("--volume \(volume.key):\(volume.value)")
+                args.append("--volume \(volume.decription)")
             }
             
             return args
+        }
+    }
+}
+
+extension Docker.ContainerSpec {
+    public struct EnvironmentVariable: Equatable, Hashable {
+        public let key: String
+        public let value: String
+        
+        public init(key: String, value: String) {
+            self.key = key
+            self.value = value
+        }
+        
+        var description: String {
+            "\(key)=\(value)"
+        }
+    }
+}
+
+extension Docker.ContainerSpec {
+    public struct PortMapping: Equatable, Hashable {
+        public let hostPort: UInt
+        public let containerPort: UInt
+        public let `protocol`: `Protocol`
+        
+        public init(hostPort: UInt, containerPort: UInt, protocol: `Protocol` = .tcp) {
+            self.hostPort = hostPort
+            self.containerPort = containerPort
+            self.protocol = `protocol`
+        }
+        
+        var description: String {
+            "\(hostPort):\(containerPort)/\(`protocol`.value)"
+        }
+    }
+}
+
+extension Docker.ContainerSpec.PortMapping {
+    public enum `Protocol` {
+        case tcp
+        case udp
+        
+        var value: String {
+            switch self {
+            case .tcp:
+                return "tcp"
+            case .udp:
+                return "udp"
+            }
         }
     }
 }
@@ -134,6 +184,40 @@ extension Docker.ContainerSpec {
                 return "always"
             case .unlessStopped:
                 return "unless-stopped"
+            }
+        }
+    }
+}
+
+extension Docker.ContainerSpec {
+    public struct VolumeMapping: Equatable, Hashable {
+        public let hostPath: String?
+        public let volume: Docker.Volume?
+        public let containerPath: String
+        
+        /// Create a volume mapping using a local directory
+        public init(hostPath: String, containerPath: String) {
+            self.hostPath = hostPath
+            self.volume = nil
+            self.containerPath = containerPath
+        }
+        
+        /// Create a volume mapping using a Docker volume
+        public init(volume: Docker.Volume, containerPath: String) {
+            self.hostPath = nil
+            self.volume = volume
+            self.containerPath = containerPath
+        }
+        
+        var decription: String {
+            if let hostPath {
+                return "\(hostPath):\(containerPath)"
+            }
+            else if let volume {
+                return "\(volume.name):\(containerPath)"
+            }
+            else {
+                return ""
             }
         }
     }
