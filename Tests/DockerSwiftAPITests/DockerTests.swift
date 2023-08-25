@@ -4,7 +4,7 @@ import XCTest
 final class DockerTests: XCTestCase {
     
     var createdContainers: [Docker.Container] = []
-    var pulledImages: [Docker.Image] = []
+    var pulledImages: Set<Docker.Image> = []
     
     override func setUp() async throws {
         // no-op
@@ -26,7 +26,7 @@ final class DockerTests: XCTestCase {
     private func createContainer(specs: Docker.ContainerSpec, image: Docker.Image) async throws -> Docker.Container {
         let container = try await Docker.create(specs, from: image, pull: true)
         createdContainers.append(container)
-        pulledImages.append(image)
+        pulledImages.insert(image)
         return container
     }
     
@@ -36,29 +36,108 @@ final class DockerTests: XCTestCase {
     
     // MARK: - Image tests
     
-    func testImageModel() async throws {
+    func testImageModel() throws {
         let output = """
-        {"Containers":"N/A","CreatedAt":"2023-06-28 04:42:50 -0400 EDT","CreatedSince":"3 weeks ago","Digest":"003cnone003e","ID":"37f74891464b","Repository":"ubuntu","SharedSize":"N/A","Size":"69.2MB","Tag":"latest","UniqueSize":"N/A","VirtualSize":"69.19MB"}
-        {"Containers":"N/A","CreatedAt":"2023-06-14 16:48:58 -0400 EDT","CreatedSince":"5 weeks ago","Digest":"003cnone003e","ID":"5053b247d78b","Repository":"alpine","SharedSize":"N/A","Size":"7.66MB","Tag":"latest","UniqueSize":"N/A","VirtualSize":"7.661MB"}
+        {"Containers":"N/A","CreatedAt":"2023-08-07 15:39:19 -0400 EDT","CreatedSince":"2 weeks ago","Digest":"sha256:7144f7bab3d4c2648d7e59409f15ec52a18006a128c733fcff20d3a4a54ba44a","ID":"f6648c04cd6c","Repository":"alpine","SharedSize":"N/A","Size":"7.66MB","Tag":"latest","UniqueSize":"N/A","VirtualSize":"7.66MB"}
+        {"Containers":"N/A","CreatedAt":"2023-08-04 00:51:18 -0400 EDT","CreatedSince":"2 weeks ago","Digest":"sha256:ec050c32e4a6085b423d36ecd025c0d3ff00c38ab93a3d71a460ff1c44fa6d77","ID":"a2f229f811bf","Repository":"ubuntu","SharedSize":"N/A","Size":"69.2MB","Tag":"latest","UniqueSize":"N/A","VirtualSize":"69.19MB"}
         """
         let images = Docker.Image.images(from: output)
         XCTAssertFalse(images.isEmpty)
-        XCTAssertEqual(images.first, .init(name: "ubuntu", tag: .latest))
+        XCTAssertEqual(images.last, .init(name: "ubuntu", tag: .latest, digest: "sha256:ec050c32e4a6085b423d36ecd025c0d3ff00c38ab93a3d71a460ff1c44fa6d77"))
     }
     
     func testImages() async throws {
-        let images: [Docker.Image] = [
+        let images: Set<Docker.Image> = [
             .init(name: "hello-world"),
             .init(name: "alpine"),
             .init(repository: "pihole", name: "pihole"),
             .init("oznu/homebridge")
         ]
-        for image in images {
-            try await Docker.pull(image: image)
-            pulledImages.append(image)
+        pulledImages = try await Docker.pull(images: images)
+        let localImages = try await Docker.images
+        for image in pulledImages {
+            XCTAssertTrue(localImages.contains(image))
+            XCTAssertNotNil(image.digest)
         }
-        for localImage in try await Docker.images {
-            XCTAssertTrue(pulledImages.contains(localImage))
+    }
+    
+    func testImageInfoModel() throws {
+        let output = """
+        sha256:a2f229f811bf715788cc7dae1fbe8f1d9146da54d3fbe2679ef6f230e38ea504
+        [ubuntu:latest]
+        2023-08-04T04:51:18.839835588Z
+        arm64
+        linux
+        69187939
+        """
+        XCTAssertNotNil(try Docker.ImageInfo(from: output))
+    }
+    
+    func testImageInfo() async throws {
+        pulledImages = try await Docker.pull(images: [
+            .init(name: "alpine"),
+            .init(repository: "pihole", name: "pihole"),
+        ])
+        for image in pulledImages {
+            let info = try await Docker.inspect(image: image)
+            print(info)
+        }
+    }
+    
+    func testManifestModel() throws {
+        let output = """
+        {
+        "Ref": "docker.io/rdall96/minecraft-server:latest",
+        "Descriptor": {
+        "digest": "sha256:58d1f169afeb7ca2f3210030fc38520abc9f51830f24dedf67527f1108ac21c0",
+        "size": 1366,
+        "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+        }
+        },
+        "SchemaV2Manifest": {
+        "schemaVersion": 2,
+        "config": {
+            "size": 2382,
+            "digest": "sha256:7b49b572a71f1a802ff86898991be2df8e0bdefaec39f43092f126f483a86570"
+        },
+        "layers": [
+            {
+                "size": 3401613,
+                "digest": "sha256:7264a8db6415046d36d16ba98b79778e18accee6ffa71850405994cffa9be7de"
+            },
+            {
+                "size": 67181352,
+                "digest": "sha256:2408c49608cedb6cca7250aff6c9ccf9a32ebb12dc60f8bb2d77cb300da21ea6"
+            },
+            {
+                "size": 47790216,
+                "digest": "sha256:95db232945b09c29b11dfe4cb3c3db03d9a3e6b4e04558f25c57fdfebd5b25ff"
+            },
+            {
+                "size": 1459,
+                "digest": "sha256:51d5e4e595e4872006ae253018399a69132dc3d69f2fcd3d32f94bbcaa8f516d"
+            },
+            {
+                "size": 32,
+                "digest": "sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1"
+            }
+        ]
+        }
+        }
+        """
+        XCTAssertNotNil(Docker.Manifest(from: output))
+    }
+    
+    func testInspectImage() async throws {
+        let images: Set<Docker.Image> = [
+            .init(name: "alpine"),
+            .init(repository: "pihole", name: "pihole"),
+        ]
+        for image in images {
+            let manifests = try await Docker.manifest(for: image)
+            XCTAssertFalse(manifests.isEmpty)
         }
     }
     
@@ -66,16 +145,30 @@ final class DockerTests: XCTestCase {
     
     func testContainerModel() async throws {
         let output = """
-        17f85860ccb3 quizzical_hellman
-        e3ad7d452464 hello
+        17f85860ccb3 quizzical_hellman pihole/pihole
+        e3ad7d452464 hello ubuntu:jammy
         """
-        let containers = Docker.Container.containers(from: output)
+        let containers = try Docker.Container.containers(from: output)
         XCTAssertFalse(containers.isEmpty)
-        XCTAssertEqual(containers.first, try .init("17f85860ccb3", name: "quizzical_hellman"))
+        XCTAssertEqual(containers.first, try .init("17f85860ccb3", name: "quizzical_hellman", image: .init("pihole/pihole")))
     }
     
     func testCreateContainer() async throws {
-        _ = try await createContainer(specs: .init(), image: .init("hello-world"))
+        let container = try await createContainer(specs: .init(), image: .init("hello-world"))
+        let localContainers = try await Docker.containers
+        XCTAssert(localContainers.contains(where: { $0.id == container.id }))
+    }
+    
+    func testContainerIsAutomaticallyRemoved() async throws {
+        let container = try await Docker.create(
+            .init(removeWhenStopped: true),
+            from: .init("hello-world"),
+            pull: true
+        )
+        try await Docker.start(container)
+        try await Task.sleep(nanoseconds: 1_000_000_000 * 1)
+        let localContainers = try await Docker.containers
+        XCTAssert(!localContainers.contains(where: { $0.id == container.id }))
     }
     
     func testCreateNamedContainer() async throws {
@@ -86,13 +179,14 @@ final class DockerTests: XCTestCase {
             image: .init("hello-world")
         )
         XCTAssertEqual(container.name, "testCreateNamedContainer")
+        XCTAssertEqual(container.image, .init("hello-world"))
     }
     
     func testRunContainer() async throws {
         let image = Docker.Image("hello-world")
         let container = try await Docker.run(image: image, with: .init(), pull: true)
         createdContainers.append(container)
-        pulledImages.append(image)
+        pulledImages.insert(image)
         try await Docker.stop(container)
     }
     
@@ -215,7 +309,7 @@ final class DockerTests: XCTestCase {
     func testContainerStatsDeleted() async throws {
         let image: Docker.Image = .init(repository: "pihole", name: "pihole")
         let container = try await Docker.create(.init(), from: image, pull: true)
-        pulledImages.append(image)
+        pulledImages.insert(image)
         try await Docker.remove(container: container)
         do {
             _ = try await Docker.stats(of: container)
@@ -245,8 +339,11 @@ final class DockerTests: XCTestCase {
         for volumeName in volumeNames {
             createdVolumes.append(try await Docker.createVolume(name: volumeName))
         }
-        for localVolume in try await Docker.volumes {
-            XCTAssertTrue(createdVolumes.contains(localVolume))
+        continueAfterFailure = true
+        let localVolumes = try await Docker.volumes
+        for volume in createdVolumes {
+            XCTAssertTrue(localVolumes.contains(volume))
+            try await Docker.remove(volume: volume)
         }
     }
     
@@ -279,7 +376,7 @@ final class DockerTests: XCTestCase {
             ]
         )
         // add the create image to the tracked list
-        self.pulledImages.append(tag)
+        self.pulledImages.insert(tag)
         
         print(result.output)
         switch result.status {
@@ -312,10 +409,7 @@ final class DockerTests: XCTestCase {
     }
     
     func testDockerInfo() async throws {
-        guard let info = try await Docker.info else {
-            XCTFail("No docker info found")
-            return
-        }
+        let info = try await Docker.info
         XCTAssertGreaterThan(info.nCpu, 0)
         XCTAssertFalse(info.architecture.isEmpty)
         XCTAssertFalse(info.serverVersion.description.isEmpty)

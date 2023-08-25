@@ -12,6 +12,7 @@ public enum DockerError: Error {
     case dockerNotFound
     case invalidResponseFormat
     case missingContainerId
+    case missingImage(Docker.Image)
     case loginFailed(String)
     
     public var errorDescription: String {
@@ -24,6 +25,8 @@ public enum DockerError: Error {
             return "Invalid data format in response"
         case .missingContainerId:
             return "Missing container ID"
+        case .missingImage(let image):
+            return "Missing image \(image)"
         case .loginFailed(_):
             return "Failed to sign into remote server"
         }

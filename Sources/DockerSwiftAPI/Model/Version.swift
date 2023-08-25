@@ -8,7 +8,7 @@
 import Foundation
 
 extension Docker {
-    public struct Version {
+    public struct Version: Equatable, Hashable {
         public let major: UInt
         public let minor: UInt
         public let patch: UInt?

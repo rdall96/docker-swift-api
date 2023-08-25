@@ -23,6 +23,7 @@ extension Docker {
         public let name: String?
         public let ports: [PortMapping]
         public let restartPolicy: RestartPolicy
+        public let removeWhenStopped: Bool
         public let tty: Bool
         public let volumes: [VolumeMapping]
         
@@ -41,6 +42,7 @@ extension Docker {
             name: String? = nil,
             ports: [PortMapping] = [],
             restartPolicy: RestartPolicy = .no,
+            removeWhenStopped: Bool = false,
             tty: Bool = false,
             volumes: [VolumeMapping] = []
         ) {
@@ -58,6 +60,7 @@ extension Docker {
             self.name = name
             self.ports = ports
             self.restartPolicy = restartPolicy
+            self.removeWhenStopped = removeWhenStopped
             self.tty = tty
             self.volumes = volumes
         }
@@ -105,6 +108,9 @@ extension Docker {
                 args.append("--publish \(port.description)")
             }
             args.append("--restart \(restartPolicy.value)")
+            if removeWhenStopped {
+                args.append("--rm")
+            }
             if tty {
                 args.append("--tty")
             }

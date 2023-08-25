@@ -39,7 +39,7 @@ enum Shell {
     private static var dockerBin: String {
         get async throws {
             // if we already have the binary path, return that, otherwise search it
-            if let binPath = env.dockerBin {
+            if let binPath = await env.dockerBin {
                 return binPath
             }
             else {
@@ -55,7 +55,7 @@ enum Shell {
                           !option.contains(":")
                     else { continue }
                     let binPath = String(option.replacingOccurrences(of: " ", with: ""))
-                    env.dockerBin = binPath
+                    await env.setDockerBin(binPath)
                     return binPath
                 }
                 throw DockerError.dockerNotFound
@@ -78,7 +78,11 @@ enum Shell {
 }
 
 extension Shell {
-    fileprivate struct Env {
+    fileprivate actor Env {
         var dockerBin: String? = nil
+        
+        func setDockerBin(_ bin: String) {
+            dockerBin = bin
+        }
     }
 }

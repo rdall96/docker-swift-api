@@ -17,28 +17,44 @@ public enum Docker {
     /// - Parameters:
     ///     - image: An `Image` object containing the repository, name, and optional tag to download.
     ///
-    public static func pull(image: Image) async throws {
-        try await Shell.docker("pull \(image.description)")
+    /// - Returns: An update `Image` object representing the image that was just pulled
+    @discardableResult
+    public static func pull(image: Image) async throws -> Image {
+        try await Shell.docker("pull \(image)")
+        guard let pulledImage = try? await images.first(where: { $0.description == image.description })
+        else { throw DockerError.missingImage(image) }
+        return pulledImage
     }
     
     /// Download multiple images from a registry.
+    /// Images will be downloaded in parallel.
     ///
     /// - Parameters:
     ///     - images: A set of `Image` objects to download.
     ///
-    public static func pull(images: Set<Image>) async throws {
-        for image in images {
-            try await Docker.pull(image: image)
+    /// - Returns: An updated set of `Image` objects that were pulled. Note that the order is not guaranteed to persist.
+    /// - Note: This call might throw if there is an error during download and any pending pulls will be discarded.
+    @discardableResult
+    public static func pull(images: Set<Image>) async throws -> Set<Image> {
+        try await withThrowingTaskGroup(of: Image?.self) { group in
+            for image in images {
+                group.addTask { try await Docker.pull(image: image) }
+            }
+            var pulledImages = Set<Image>()
+            for try await result in group.compactMap({ $0 }) {
+                pulledImages.insert(result)
+            }
+            return pulledImages
         }
     }
     
     /// Remove an image.
     ///
     /// - Parameters:
-    ///     - image: The `Image` obejct to remove.
+    ///     - image: The `Image` object to remove.
     ///     - force: Force removal of the image.
     public static func remove(image: Image, force: Bool = false) async throws {
-        try await Shell.docker("rmi \(force ? "--force" : "") \(image.description)")
+        try await Shell.docker("rmi \(force ? "--force" : "") \(image)")
     }
     
     /// List images.
@@ -46,7 +62,41 @@ public enum Docker {
     /// - Returns: A list of `Image` objects found on the current system.
     public static var images: [Image] {
         get async throws {
-            Image.images(from: try await Shell.docker("images -a --format \"{{ json . }}\""))
+            Image.images(from: try await Shell.docker("images -a --digests --format \"{{ json . }}\""))
+        }
+    }
+    
+    /// Return low-level information on Docker objects.
+    ///
+    /// - Parameters:
+    ///     - image: The `Image` object to inspect.
+    ///
+    /// - Returns: The image's `Image.ImageData`.
+    public static func inspect(image: Image) async throws -> ImageInfo {
+        let output = try await Shell.docker("inspect --format '\(ImageInfo.inspectFormat)' \(image)")
+        // you can specify multiple images in the command, which will yield a list of info JSON objects, but we only need this first one here
+        guard let info = try? ImageInfo(from: output) else {
+            throw DockerError.invalidResponseFormat
+        }
+        return info
+    }
+    
+    /// Get an image manifest, or manifest list.
+    ///
+    /// - Parameters:
+    ///     - image: The `Image` object to inspect.
+    ///
+    /// - Returns: A `Manifest` object for the image.
+    public static func manifest(for image: Image) async throws -> [Manifest] {
+        let output = try await Shell.docker("manifest inspect --verbose \(image)")
+        if let manifest = Manifest(from: output) {
+            return [manifest]
+        }
+        if let manifests = try? Manifest.manifests(from: output) {
+            return manifests
+        }
+        else {
+            throw DockerError.invalidResponseFormat
         }
     }
     
@@ -57,15 +107,15 @@ public enum Docker {
     /// - Parameters:
     ///     - specs: `ContainerSpec` object to define the properties of the container to create.
     ///     - image: Image to create the container from.
-    ///     - pull: Pull the image
+    ///     - pull: Pull the image if it's missing.
     ///
     /// - Returns: A `Container` object representing the newly created container.
-    public static func create(_ specs: ContainerSpec, from image: Image, pull: Bool = false) async throws -> Container {
+    public static func create(_ specs: ContainerSpec, from image: Image, pull: Bool = true) async throws -> Container {
         if pull {
             try await self.pull(image: image)
         }
-        let output = try await Shell.docker("create \(specs.options.joined(separator: " ")) \(image.description)")
-        return try .init(output, name: specs.name)
+        let output = try await Shell.docker("create \(specs.options.joined(separator: " "))  --pull never \(image)")
+        return try .init(output, name: specs.name, image: image)
     }
     
     /// Create a new container from the given image, and run it detached.
@@ -73,21 +123,21 @@ public enum Docker {
     /// - Parameters:
     ///     - image: Image to create the container from.
     ///     - specs: `ContainerSpec` object to define the properties of the container to create.
-    ///     - pull: Pull the image
+    ///     - pull: Pull the image if it's missing.
     ///
     /// - Returns: A `Container` object representing the newly created container.
-    public static func run(image: Image, with specs: ContainerSpec, pull: Bool = false) async throws -> Container {
+    public static func run(image: Image, with specs: ContainerSpec, pull: Bool = true) async throws -> Container {
         if pull {
             try await self.pull(image: image)
         }
-        let output = try await Shell.docker("run --detach \(specs.options.joined(separator: " ")) \(image.description)")
-        return try .init(output, name: specs.name)
+        let output = try await Shell.docker("run --detach \(specs.options.joined(separator: " ")) --pull never \(image)")
+        return try .init(output, name: specs.name, image: image)
     }
     
     /// Remove a container.
     ///
     /// - Parameters:
-    ///     - container: The `Container` obejct to remove.
+    ///     - container: The `Container` object to remove.
     ///     - removeVolumes: Remove anonymous volumes associated with the container.
     public static func remove(container: Container, removeVolumes: Bool = false, force: Bool = false) async throws {
         try await Shell.docker("rm \(removeVolumes ? "--volumes" : "") \(force ? "--force" : "") \(container.id)")
@@ -96,7 +146,7 @@ public enum Docker {
     /// Start a stopped container.
     ///
     /// - Parameters:
-    ///     - container: the `Container` obejct to start.
+    ///     - container: the `Container` object to start.
     ///     - interactive: Attach container's STDIN.
     public static func start(_ container: Container, interactive: Bool = false) async throws {
         try await Shell.docker("start \(interactive ? "--interactive" : "") \(container.id)")
@@ -145,19 +195,22 @@ public enum Docker {
     ///     - ttry: Allocate a pseudo-TTY.
     ///     - user: Username or UID (format: "<name|uid>[:<group|gid>]").
     ///
-    /// - Returns: The output of the command
+    /// - Returns: The output of the command.
+    /// - Note: If the `detach` option is used, no output will be returned.
     @discardableResult
     public static func exec(
         _ command: String,
         in container: Container,
+        detach: Bool = false,
         environment: [String] = [],
         interactive: Bool = false,
         tty: Bool = false,
         user: String? = nil
     ) async throws -> String {
-        var options: [String] = [
-            "--detach",
-        ]
+        var options = [String]()
+        if detach {
+            options.append("--detach")
+        }
         for item in environment {
             options.append("--env \(item)")
         }
@@ -175,10 +228,10 @@ public enum Docker {
     
     /// List containers.
     ///
-    /// - Returns: A list of `Container` obejcts found on the current system.
+    /// - Returns: A list of `Container` objects found on the current system.
     public static var containers: [Container] {
         get async throws {
-            Container.containers(from: try await Shell.docker("ps -a --format \"{{.ID}} {{.Names}}\""))
+            try Container.containers(from: try await Shell.docker("ps -a --no-trunc --format \"{{.ID}} {{.Names}} {{.Image}}\""))
         }
     }
     
@@ -239,6 +292,15 @@ public enum Docker {
         return .init(name: output)
     }
     
+    /// Remove a volume. You cannot remove a volume that is in use by a container.
+    ///
+    /// - Parameters:
+    ///     - volume: The `Volume` object to remove.
+    ///
+    public static func remove(volume: Volume) async throws {
+        try await Shell.docker("volume rm \(volume.name)")
+    }
+    
     // MARK: - Build
     
     /// Start a build.
@@ -282,7 +344,9 @@ public enum Docker {
                 image: nil
             )
         }
-        return .init(status: .success, output: result.output, image: imageTag)
+        // find the newy built image to grab the digest
+        let builtImage = try await Docker.images.first(where: { $0.description == imageTag.description })
+        return .init(status: .success, output: result.output, image: builtImage ?? imageTag)
     }
     
     // MARK: - Tag
@@ -290,8 +354,8 @@ public enum Docker {
     /// Create a tag for a source image.
     ///
     /// - Parameters:
-    ///     - tag: the new `Image` name to create
-    ///     - source: The source `Image` to reference when tagging
+    ///     - tag: the new `Image` name to create.
+    ///     - source: The source `Image` to reference when tagging.
     ///
     public static func tag(_ tag: Image, source: Image) async throws {
         try await Shell.docker("tag \(source.description) \(tag.description)")
@@ -324,13 +388,16 @@ public enum Docker {
         try await Shell.docker("logout \(server.absoluteString)")
     }
     
-    /// Upload an image to a registry
+    /// Upload an image to a registry.
     ///
     /// - Parameters:
-    ///     - image: The `Image` to push to the remote repository
+    ///     - image: The `Image` to push to the remote repository.
     ///
-    public static func push(_ image: Image) async throws {
-        try await Shell.docker("push \(image.description)")
+    /// - Returns: The `Manifest` or multiple  for the pushed image.
+    @discardableResult
+    public static func push(_ image: Image) async throws -> [Manifest] {
+        try await Shell.docker("push \(image)")
+        return try await manifest(for: image)
     }
     
     // MARK: - System
@@ -347,10 +414,12 @@ public enum Docker {
     /// Display system-wide information.
     ///
     /// - Returns: An `Info` object representing the Docker information for the current system.
-    public static var info: Info? {
+    public static var info: Info {
         get async throws {
             let output = try await Shell.docker("info --format \"{{ json . }}\"")
-            guard let data = output.data(using: .utf8) else { return nil }
+            guard let data = output.data(using: .utf8) else {
+                throw DockerError.invalidResponseFormat
+            }
             return try JSONDecoder().decode(Info.self, from: data)
         }
     }

@@ -51,6 +51,9 @@ final class DockerHubTests: XCTestCase {
             XCTAssertGreaterThan(testTag.id, 0)
             XCTAssertFalse(testTag.name.isEmpty)
             XCTAssertFalse(testTag.images.isEmpty)
+            for image in testTag.images {
+                XCTAssertFalse(image.digest.isEmpty)
+            }
         }
     }
 }

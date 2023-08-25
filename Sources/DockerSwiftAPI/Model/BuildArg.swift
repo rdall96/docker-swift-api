@@ -10,7 +10,7 @@ import Foundation
 extension Docker {
     
     /// Configurable build argument to pass to `docker build`. `--build-arg <key>=<value>`
-    public struct BuildArg: Equatable, Hashable {
+    public struct BuildArg: Equatable, Hashable, CustomStringConvertible {
         /// Build argument key specified in the Dockerfile
         public let key: String
         /// Buidl argument value to pass to the docker build context

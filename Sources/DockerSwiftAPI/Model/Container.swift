@@ -12,35 +12,37 @@ extension Docker {
     public struct Container: Equatable, Hashable {
         public let id: String
         public let name: String?
+        public let image: Image
         
         /// Create a container object from the docker command output and the given container specifications
-        init(_ id: String, name: String? = nil) throws {
+        init(_ id: String, name: String? = nil, image: Image) throws {
             let id = id.replacingOccurrences(of: "\n", with: "")
             guard !id.isEmpty else {
                 throw DockerError.missingContainerId
             }
             self.id = id
             self.name = name
+            self.image = image
         }
     }
 }
 
 extension Docker.Container {
     /// Parse the given docker command output to load a list of all containers
-    static func containers(from text: String) -> [Docker.Container] {
+    static func containers(from text: String) throws -> [Docker.Container] {
         /*
-         17f85860ccb3 there
-         e3ad7d452464 hello
+         17f85860ccb3 there repo/image
+         e3ad7d452464 hello image:tag
          */
-        return text
-            .split(separator: "\n") // split lines
+        try text
+            .split(separator: "\n")
             .compactMap {
-                let components = $0.split(separator: " ", maxSplits: 1)
-                guard components.count == 2 else { return nil }
-                return try? .init(
-                    String(components[0]),
-                    name: String(components[1])
-                )
+                let components = $0.split(separator: " ")
+                    .compactMap({ String($0) })
+                guard components.count == 3 else {
+                    throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Missing data in container info: \(components)"))
+                }
+                return try .init(components[0], name: components[1], image: .init(components[2]))
             }
     }
 }
