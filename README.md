@@ -51,9 +51,3 @@ let package = Package(
     ]
 )
 ```
-
-## QuickStart
-```shell
-git clone https://gitlab.com/rdall96/docker-swift.git
-cd docker-swift && open Package.swift
-```

@@ -9,10 +9,11 @@ import Foundation
 import Commands
 
 enum Shell {
-    
+    typealias Result = Commands.Result
+
     private static var env = Env()
     
-    static func run(_ command: String) -> Commands.Result {
+    static func run(_ command: String) -> Result {
         Commands.Bash.run(.init(command), environment: .global)
     }
     
@@ -69,7 +70,7 @@ enum Shell {
     }
     
     @_disfavoredOverload
-    static func docker(_ command: String) async throws -> Commands.Result {
+    static func docker(_ command: String) async throws -> Result {
         let dockerBin = try await dockerBin
         return await withUnsafeContinuation { continuation in
             continuation.resume(returning: Shell.run("\(dockerBin) \(command)"))

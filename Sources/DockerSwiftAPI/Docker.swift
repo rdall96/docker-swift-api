@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Commands
 
 public enum Docker {
     
@@ -334,7 +333,7 @@ public enum Docker {
         
         // start the build
         let command = options.joined(separator: " ")
-        let result: Commands.Result = try await Shell.docker(command)
+        let result: Shell.Result = try await Shell.docker(command)
         guard result.isSuccess else {
             return .init(
                 status: .failed(DockerError.systemError(

@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import Commands
 
 // MARK: - API Endpoints
 public enum DockerHub {

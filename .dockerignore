@@ -1,2 +1,20 @@
-.build/
-.swiftpm/
+# Docker
+.dockerignore
+Dockerfile
+
+# System files
+.DS_Store
+.build
+.swiftpm
+.vscode
+
+# Git
+.git
+.gitignore
+.gitlab-ci.yml
+*.md
+*.MD
+LICENSE
+
+# Project
+.gitlab-ci.yml
