@@ -51,7 +51,7 @@ extension Docker.Version: Decodable {
         }
         else {
             throw DecodingError.dataCorrupted(.init(
-                codingPath: [], debugDescription: "Found invalid version format"
+                codingPath: [], debugDescription: "Invalid Docker version format: \(string)"
             ))
         }
     }
