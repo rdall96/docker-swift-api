@@ -6,8 +6,14 @@
 //
 
 import Foundation
+import AsyncHTTPClient
+
+public enum DockerHubError: Error {
+    case requestFailed
+}
 
 // MARK: - API Endpoints
+
 public enum DockerHub {
     public typealias Namespace = String
     
@@ -29,16 +35,38 @@ public enum DockerHub {
 
 // MARK: - Requests
 
+fileprivate struct PagedResponse<T: Decodable>: Decodable {
+    let count: UInt
+    let next: URL?
+    let previous: URL?
+    let results: [T]
+}
+
+fileprivate struct DockerHubRequest {
+    let url: URL
+
+    func get<T: Decodable>() async throws -> T {
+        let client = HTTPClient(eventLoopGroupProvider: .singleton)
+        let response = try await client.execute(.GET, url: url.absoluteString).get()
+        guard response.status == .ok, let data = response.body else {
+            try? await client.shutdown()
+            throw DockerHubError.requestFailed
+        }
+        let decoded = try JSONDecoder().decode(T.self, from: data)
+        try? await client.shutdown()
+        return decoded
+    }
+}
+
 extension DockerHub {
     
     private static func pagedResults<T:Decodable>(for url: URL) async throws -> Set<T> {
         var data = Set<T>()
         var url: URL? = url
         while url != nil {
-            guard let unwrappedUrl = url else {
-                break
-            }
-            let response: PagedResponse<T> = try await Shell.curl(unwrappedUrl)
+            guard let unwrappedUrl = url else { break }
+            let request = DockerHubRequest(url: unwrappedUrl)
+            let response: PagedResponse<T> = try await request.get()
             url = response.next
             data.formUnion(response.results)
         }
@@ -100,11 +128,4 @@ extension DockerHub {
         public let os: String
         public let size: UInt
     }
-}
-
-fileprivate struct PagedResponse<T:Decodable>: Decodable {
-    let count: UInt
-    let next: URL?
-    let previous: URL?
-    let results: [T]
 }
