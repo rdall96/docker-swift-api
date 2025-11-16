@@ -1,0 +1,26 @@
+{
+  "configurations" : [
+    {
+      "id" : "B881A4F3-99EC-4881-8A17-3ADBC147CAEE",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "codeCoverage" : false,
+    "performanceAntipatternCheckerEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "DockerSwiftAPITests",
+        "name" : "DockerSwiftAPITests"
+      }
+    }
+  ],
+  "version" : 1
+}

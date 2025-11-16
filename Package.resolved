@@ -1,5 +1,5 @@
 {
-  "originHash" : "43214654d03d8e4cbe778bd51b779ea7a09b785dc53b438d1b1f91896e3b5c7a",
+  "originHash" : "f4c268099f1f70480b51f1c668370a1370c9437e937f17064a746dbc3b924542",
   "pins" : [
     {
       "identity" : "async-http-client",
@@ -62,15 +62,6 @@
       "state" : {
         "revision" : "7b847a3b7008b2dc2f47ca3110d8c782fb2e5c7e",
         "version" : "1.3.0"
-      }
-    },
-    {
-      "identity" : "swift-commands",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/qiuzhifei/swift-commands",
-      "state" : {
-        "revision" : "ed3de1c1057f4e3a5b0371d0762facd7c9a3dace",
-        "version" : "0.7.0"
       }
     },
     {

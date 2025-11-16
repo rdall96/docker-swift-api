@@ -8,10 +8,6 @@
 import Foundation
 import AsyncHTTPClient
 
-public enum DockerHubError: Error {
-    case requestFailed
-}
-
 // MARK: - API Endpoints
 
 public enum DockerHub {
@@ -50,7 +46,7 @@ fileprivate struct DockerHubRequest {
         let response = try await client.execute(.GET, url: url.absoluteString).get()
         guard response.status == .ok, let data = response.body else {
             try? await client.shutdown()
-            throw DockerHubError.requestFailed
+            throw DockerError.requestFailed(response.status)
         }
         let decoded = try JSONDecoder().decode(T.self, from: data)
         try? await client.shutdown()

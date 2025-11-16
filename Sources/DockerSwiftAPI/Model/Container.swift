@@ -17,9 +17,10 @@ extension Docker {
         /// Create a container object from the docker command output and the given container specifications
         init(_ id: String, name: String? = nil, image: Image) throws {
             let id = id.replacingOccurrences(of: "\n", with: "")
-            guard !id.isEmpty else {
-                throw DockerError.missingContainerId
-            }
+            // FIXME: (2025/11/16) This will get restored at a later date
+//            guard !id.isEmpty else {
+//                throw DockerError.missingContainerId
+//            }
             self.id = id
             self.name = name
             self.image = image

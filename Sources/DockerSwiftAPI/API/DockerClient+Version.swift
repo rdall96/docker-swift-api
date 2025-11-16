@@ -9,13 +9,13 @@ import Foundation
 import NIOHTTP1
 
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/System/operation/SystemVersion
-fileprivate struct VersionRequest: UnixSocketRequest {
+fileprivate struct VersionRequest: DockerRequest {
     typealias Query = Never
     typealias Body = Never
     typealias Response = DockerClient.Version
 
     let method: HTTPMethod = .GET
-    let path: String = "version"
+    let path: String = "/version"
 }
 
 extension DockerClient {
@@ -63,8 +63,8 @@ extension DockerClient {
 
     /// Fetch the version information from this client.
     public var version: Version {
-        get async throws {
-            try await socket.run(VersionRequest())
+        get async throws(DockerError) {
+            try await run(VersionRequest())
         }
     }
 }

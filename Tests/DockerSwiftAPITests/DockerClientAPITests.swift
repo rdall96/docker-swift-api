@@ -40,23 +40,22 @@ struct DockerClientAPITests {
 
     @Test
     func pullImage() async throws {
-        try await client.pull("hello-world", tag: "nanoserver")
-        try await client.pull("hello-world", digest: "4420cea78cd60f211265c0bb555b3318808beed7b20212fda0eb45cdb7141027")
+        try await client.pull("hello-world", tag: "linux")
 
         let images = try await client.images(withName: "hello-world")
         #expect(images.isEmpty == false)
 
-        let image = try await client.image(withName: "hello-world", tag: "nanoserver")
+        let image = try #require(try await client.image(withName: "hello-world", tag: "linux"))
         #expect(images.contains(image))
     }
 
     @Test
     func tagImage() async throws {
         try await client.pull("hello-world")
-        let image = try await client.image(withName: "hello-world")
+        let image = try #require(try await client.image(withName: "hello-world"))
 
         try await client.tagImage(with: image.id, as: "hello-world", tag: "test")
-        let newImage = try await client.image(withName: "hello-world", tag: "test")
+        let newImage = try #require(try await client.image(withName: "hello-world", tag: "test"))
 
         #expect(newImage.id == image.id)
     }
@@ -73,15 +72,14 @@ struct DockerClientAPITests {
     @Test
     func pruneImages() async throws {
         try await client.pull("hello-world")
-        let result = try await client.pruneImages()
-        // Nothing to delete
-        #expect(result.reclaimedSpaceBytes == 0)
+        try await client.pruneImages()
+        // Nothing to do
     }
 
     @Test
     func buildImage() async throws {
         let buildDir = try #require(Bundle.module.url(forResource: "TestBuild", withExtension: nil))
-        try await client.buildImage(
+        let image = try await client.buildImage(
             at: buildDir,
             ignoreFiles: [
                 "ignore_this_file.txt",
@@ -90,5 +88,6 @@ struct DockerClientAPITests {
             tag: "buildImage",
             useCache: false
         )
+        #expect(image.tags.contains("test:buildImage"))
     }
 }

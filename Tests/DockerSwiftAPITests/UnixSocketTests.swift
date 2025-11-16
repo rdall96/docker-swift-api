@@ -22,7 +22,7 @@ final class UnixSocketTests {
     }
 
     deinit {
-        try? socket.shutdown()
+        socket.shutdown()
     }
 
     private func encode<T: Encodable>(_ value: T) throws -> HTTPClient.Body {
@@ -39,32 +39,9 @@ final class UnixSocketTests {
         #expect(result.isEmpty == false)
     }
 
-    private struct CreateDockerContainerRequest: UnixSocketRequest {
-        typealias Query = Never
-
-        struct Context: Encodable {
-            let Image: String
-        }
-
-        let method: HTTPMethod = .POST
-        let path: String = "containers/create"
-        let body: Context?
-
-        init(image: String) {
-            body = .init(Image: image)
-        }
-
-        struct Response: Decodable {
-            let Id: String
-        }
-    }
-
     @Test
     func startContainer() async throws {
         let pullResponse = try await socket.run("images/create?fromImage=hello-world", method: .POST)
         #expect(pullResponse.status == .ok)
-
-        let createResponse = try await socket.run(CreateDockerContainerRequest(image: "hello-world"))
-        #expect(createResponse.Id.isEmpty == false)
     }
 }

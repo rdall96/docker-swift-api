@@ -11,37 +11,11 @@ import NIOHTTP1
 import AsyncHTTPClient
 import Logging
 
-enum UnixSocketError: Error {
-    case failedToEncodeRequest
-    case requestFailed
+internal enum UnixSocketError: Error {
+    case unknown
     case badRequest
-    case missingResponseBody
-    case failedToDecodeResponse
+    case requestFailed(reason: String)
     case serverError(reason: String)
-}
-
-internal enum UnixSocketRequestContentType: String {
-    case json = "application/json"
-    case tar = "application/x-tar"
-}
-
-internal protocol UnixSocketRequest {
-    associatedtype Query: Encodable
-    associatedtype Body
-    typealias ContentType = UnixSocketRequestContentType
-    associatedtype Response
-
-    var method: HTTPMethod { get }
-    var path: String { get }
-    var query: Query? { get }
-    var body: Body? { get }
-    var contentType: ContentType { get }
-}
-
-extension UnixSocketRequest {
-    var query: Query? { nil }
-    var body: Body? { nil }
-    var contentType: ContentType { .json }
 }
 
 internal final class UnixSocket: Sendable, CustomStringConvertible {
@@ -60,7 +34,7 @@ internal final class UnixSocket: Sendable, CustomStringConvertible {
     }
 
     /// The HTTPClient must be shutdown properly to avoid crashes.
-    func shutdown() throws {
+    func shutdown() {
         do {
             try client.syncShutdown()
         }
@@ -77,140 +51,43 @@ internal final class UnixSocket: Sendable, CustomStringConvertible {
         _ path: String,
         method: HTTPMethod = .GET,
         body: HTTPClient.Body? = nil,
-        contentType: UnixSocketRequestContentType = .json
-    ) async throws -> HTTPClient.Response {
-        var headers = HTTPHeaders()
-        headers.add(name: "Content-Type", value: contentType.rawValue)
+        headers: HTTPHeaders? = nil
+    ) async throws(UnixSocketError) -> HTTPClient.Response {
+        // add Host header
+        var headers = headers ?? [:]
         headers.add(name: "Host", value: hostname)
 
-        return try await client.execute(
-            on: "/\(socket)",
-            method,
-            path: "/\(hostname)/\(path)",
-            body: body,
-            headers: headers,
-            logger: logger
-        )
-    }
-
-    @discardableResult
-    private func response<T: UnixSocketRequest>(for request: T) async throws -> HTTPClient.Response {
-        // Build the endpoint
-        let endpoint: String
+        let response: HTTPClient.Response
         do {
-            endpoint = try request.endpoint
+            response = try await client.execute(
+                on: "/\(socket)",
+                method,
+                path: "/\(hostname)/\(path)",
+                body: body,
+                headers: headers,
+                logger: logger
+            )
+        }
+        catch let error as HTTPClientError {
+            logger.error("Invalid request: \(error)")
+            throw .badRequest
         }
         catch {
-            logger.error("Failed to encode \(type(of: request)) endpoint: \(error)")
-            throw UnixSocketError.failedToEncodeRequest
+            logger.error("Request failed: \(error)")
+            throw .requestFailed(reason: error.localizedDescription)
         }
 
-        // Encode the body
-        let body: HTTPClient.Body?
-        if let data = request.body as? Data {
-            body = .data(data)
-        }
-        else if let encodable = request.body as? any Encodable {
-            do {
-                body = .data(try JSONEncoder().encode(encodable))
-            }
-            catch {
-                logger.error("Failed to encode \(type(of: request)) body (\(type(of: encodable))): \(error)")
-                throw UnixSocketError.failedToEncodeRequest
-            }
-        }
-        else {
-            body = nil
-        }
-
-        // Run the request
-        let response = try await run(endpoint, method: request.method, body: body, contentType: request.contentType)
-
-        // Check response status code
-        switch response.status.code {
-        case 200...299:
-            logger.debug("\(type(of: request)) completed successfully!")
-            break
-        case 500:
-            let reason = response.body.flatMap { String(buffer: $0) } ?? "unknown"
-            logger.error("\(type(of: request)) failed! Server error: \(reason)")
-            throw UnixSocketError.serverError(reason: reason)
+        // Check response status and return
+        switch response.status {
+        case .ok, .created, .accepted, .noContent:
+            return response
+        case .badRequest, .unauthorized, .forbidden, .notFound, .methodNotAllowed, .payloadTooLarge, .unsupportedMediaType:
+            throw .requestFailed(reason: response.status.description)
+        case .internalServerError, .notImplemented, .badGateway, .serviceUnavailable, .gatewayTimeout:
+            throw .serverError(reason: response.status.description)
         default:
-            logger.debug("\(type(of: request)) failed! [\(response.status.code)] \(response.status.description)")
-            throw UnixSocketError.requestFailed
+            logger.debug("[\(path)] Request failed due to an unknown error! \(response.status.description)")
+            throw .unknown
         }
-
-        return response
-    }
-
-    func run<Request: UnixSocketRequest>(_ request: Request) async throws where Request.Response == Void {
-        try await response(for: request)
-    }
-
-    func run<Request: UnixSocketRequest>(_ request: Request) async throws -> Request.Response where Request.Response : Decodable {
-        let response = try await response(for: request)
-
-        // Decode the response body
-        guard let data = response.body else {
-            throw UnixSocketError.missingResponseBody
-        }
-        do {
-            return try JSONDecoder().decode(Request.Response.self, from: data)
-        }
-        catch {
-            logger.error("Failed to decode \(Request.Response.self): \(error)")
-            throw UnixSocketError.failedToDecodeResponse
-        }
-    }
-}
-
-fileprivate extension UnixSocketRequest {
-
-    private var queryDictionary: [String : Any]? {
-        get throws {
-            guard let query else {
-                return nil
-            }
-            let data = try JSONEncoder().encode(query)
-            let json = try JSONSerialization.jsonObject(with: data)
-            guard let dictionary = json as? [String : Any] else {
-                throw EncodingError.invalidValue(
-                    json,
-                    .init(codingPath: [], debugDescription: "Query data \(type(of: query)) is not a valid JSON dictionary")
-                )
-            }
-            return dictionary
-        }
-    }
-
-    var endpoint: String {
-        get throws {
-            guard let queryDictionary = try queryDictionary else {
-                return path
-            }
-            return path + "?" + queryDictionary
-                .reduce(into: []) { $0.append("\($1.key)=\($1.value)") }
-                .joined(separator: "&")
-        }
-    }
-}
-
-// HTTPClient extension to run requests on a given unix socket
-fileprivate extension HTTPClient {
-    func execute(
-        on socket: String,
-        _ method: HTTPMethod,
-        path: String,
-        body: Body?,
-        headers: HTTPHeaders,
-        deadline: NIODeadline? = nil,
-        logger: Logger
-    ) async throws -> Response {
-        guard let url = URL(httpURLWithSocketPath: socket, uri: path) else {
-            throw HTTPClientError.invalidURL
-        }
-        let request = try Request(url: url, method: method, headers: headers, body: body)
-        logger.debug("[\(method.rawValue)] \(url.absoluteString)")
-        return try await execute(request: request, deadline: deadline, logger: logger).get()
     }
 }

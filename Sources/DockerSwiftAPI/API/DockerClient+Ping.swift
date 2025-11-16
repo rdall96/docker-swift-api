@@ -9,13 +9,13 @@ import Foundation
 import NIOHTTP1
 
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/System/operation/SystemPing
-fileprivate struct PingRequest: UnixSocketRequest {
+fileprivate struct PingRequest: DockerRequest {
     typealias Query = Never
     typealias Body = Never
     typealias Response = Void
 
     let method: HTTPMethod = .GET
-    let path: String = "_ping"
+    let path: String = "/_ping"
 }
 
 extension DockerClient {
@@ -23,7 +23,7 @@ extension DockerClient {
     public var isAvailable: Bool {
         get async {
             do {
-                try await socket.run(PingRequest())
+                try await run(PingRequest())
                 return true
             }
             catch {
