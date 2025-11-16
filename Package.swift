@@ -33,7 +33,10 @@ let package = Package(
         ),
         .testTarget(
             name: "DockerSwiftAPITests",
-            dependencies: ["DockerSwiftAPI"]
+            dependencies: ["DockerSwiftAPI"],
+            resources: [
+                .copy("TestBuild"),
+            ]
         ),
     ]
 )

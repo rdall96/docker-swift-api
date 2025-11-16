@@ -8,6 +8,7 @@
 import Foundation
 import NIOHTTP1
 
+/// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/System/operation/SystemVersion
 fileprivate struct VersionRequest: UnixSocketRequest {
     typealias Query = Never
     typealias Body = Never

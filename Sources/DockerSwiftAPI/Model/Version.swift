@@ -8,18 +8,18 @@
 import Foundation
 
 extension Docker {
-    public struct Version: Equatable, Hashable {
+    public struct Version: Equatable, Hashable, Decodable {
         public let major: UInt
         public let minor: UInt
         public let patch: UInt?
-        
-        init(major: UInt, minor: UInt, patch: UInt? = nil) {
+
+        private init(major: UInt, minor: UInt, patch: UInt? = nil) {
             self.major = major
             self.minor = minor
             self.patch = patch
         }
-        
-        init?(from string: String) {
+
+        private init?(from string: String) {
             let components = string.split(separator: ".")
                 .compactMap { String($0) }
                 .compactMap { UInt($0) }
@@ -30,29 +30,24 @@ extension Docker {
                 patch: components.count == 3 ? components[2] : nil
             )
         }
-        
-        /// A textual representation of the version data
-        public var description: String {
-            "\(major).\(minor)\(patch != nil ? ".\(patch!)" : "")"
+
+        public init(from decoder: Decoder) throws {
+            let container = try decoder.singleValueContainer()
+            let string = try container.decode(String.self)
+            if let version = Docker.Version(from: string) {
+                self = version
+            }
+            else {
+                throw DecodingError.dataCorrupted(.init(
+                    codingPath: [], debugDescription: "Invalid Docker version format: \(string)"
+                ))
+            }
         }
     }
 }
 
-extension Docker.Version: Decodable {
-    /*
-     24.0.2
-     */
-    
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        let string = try container.decode(String.self)
-        if let version = Docker.Version(from: string) {
-            self = version
-        }
-        else {
-            throw DecodingError.dataCorrupted(.init(
-                codingPath: [], debugDescription: "Invalid Docker version format: \(string)"
-            ))
-        }
+extension Docker.Version: CustomStringConvertible {
+    public var description: String {
+        "\(major).\(minor)\(patch != nil ? ".\(patch!)" : "")"
     }
 }

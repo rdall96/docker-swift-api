@@ -17,22 +17,31 @@ enum UnixSocketError: Error {
     case badRequest
     case missingResponseBody
     case failedToDecodeResponse
+    case serverError(reason: String)
+}
+
+internal enum UnixSocketRequestContentType: String {
+    case json = "application/json"
+    case tar = "application/x-tar"
 }
 
 internal protocol UnixSocketRequest {
     associatedtype Query: Encodable
-    associatedtype Body: Encodable
+    associatedtype Body
+    typealias ContentType = UnixSocketRequestContentType
     associatedtype Response
 
     var method: HTTPMethod { get }
     var path: String { get }
     var query: Query? { get }
     var body: Body? { get }
+    var contentType: ContentType { get }
 }
 
 extension UnixSocketRequest {
     var query: Query? { nil }
     var body: Body? { nil }
+    var contentType: ContentType { .json }
 }
 
 internal final class UnixSocket: Sendable, CustomStringConvertible {
@@ -64,9 +73,14 @@ internal final class UnixSocket: Sendable, CustomStringConvertible {
 
     /// Send a request to the socket.
     @discardableResult
-    func run(_ path: String, method: HTTPMethod = .GET, body: HTTPClient.Body? = nil) async throws -> HTTPClient.Response {
+    func run(
+        _ path: String,
+        method: HTTPMethod = .GET,
+        body: HTTPClient.Body? = nil,
+        contentType: UnixSocketRequestContentType = .json
+    ) async throws -> HTTPClient.Response {
         var headers = HTTPHeaders()
-        headers.add(name: "Content-Type", value: "application/json")
+        headers.add(name: "Content-Type", value: contentType.rawValue)
         headers.add(name: "Host", value: hostname)
 
         return try await client.execute(
@@ -92,26 +106,35 @@ internal final class UnixSocket: Sendable, CustomStringConvertible {
         }
 
         // Encode the body
-        var body: HTTPClient.Body?
-        if let requestBody = request.body {
+        let body: HTTPClient.Body?
+        if let data = request.body as? Data {
+            body = .data(data)
+        }
+        else if let encodable = request.body as? any Encodable {
             do {
-                let encoded = try JSONEncoder().encode(requestBody)
-                body = .data(encoded)
+                body = .data(try JSONEncoder().encode(encodable))
             }
             catch {
-                logger.error("Failed to encode \(type(of: request)) body (\(type(of: requestBody))): \(error)")
+                logger.error("Failed to encode \(type(of: request)) body (\(type(of: encodable))): \(error)")
                 throw UnixSocketError.failedToEncodeRequest
             }
         }
+        else {
+            body = nil
+        }
 
         // Run the request
-        let response = try await run(endpoint, method: request.method, body: body)
+        let response = try await run(endpoint, method: request.method, body: body, contentType: request.contentType)
 
         // Check response status code
         switch response.status.code {
         case 200...299:
             logger.debug("\(type(of: request)) completed successfully!")
             break
+        case 500:
+            let reason = response.body.flatMap { String(buffer: $0) } ?? "unknown"
+            logger.error("\(type(of: request)) failed! Server error: \(reason)")
+            throw UnixSocketError.serverError(reason: reason)
         default:
             logger.debug("\(type(of: request)) failed! [\(response.status.code)] \(response.status.description)")
             throw UnixSocketError.requestFailed
@@ -187,6 +210,7 @@ fileprivate extension HTTPClient {
             throw HTTPClientError.invalidURL
         }
         let request = try Request(url: url, method: method, headers: headers, body: body)
+        logger.debug("[\(method.rawValue)] \(url.absoluteString)")
         return try await execute(request: request, deadline: deadline, logger: logger).get()
     }
 }

@@ -27,26 +27,6 @@ extension Docker {
     }
 }
 
-extension Docker.Container {
-    /// Parse the given docker command output to load a list of all containers
-    static func containers(from text: String) throws -> [Docker.Container] {
-        /*
-         17f85860ccb3 there repo/image
-         e3ad7d452464 hello image:tag
-         */
-        try text
-            .split(separator: "\n")
-            .compactMap {
-                let components = $0.split(separator: " ")
-                    .compactMap({ String($0) })
-                guard components.count == 3 else {
-                    throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Missing data in container info: \(components)"))
-                }
-                return try .init(components[0], name: components[1], image: .init(components[2]))
-            }
-    }
-}
-
 // MARK: - Container Status
 extension Docker.Container {
     public enum Status {

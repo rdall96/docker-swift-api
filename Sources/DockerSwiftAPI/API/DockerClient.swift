@@ -16,6 +16,8 @@ public final class DockerClient {
     internal let socket: UnixSocket
     internal let logger: Logger
 
+    /// Initialize a Docker client object by connecting to a Unix socket.
+    /// You can specify which API version to use, but note that some features might not work properly.
     public init(name: String = "docker-local", socket: Socket = "/var/run/docker.sock", api: DockerAPIVersion = .latest) {
         logger = Logger(label: name)
         self.socket = UnixSocket(socket, hostname: api.rawValue, logger: logger)
