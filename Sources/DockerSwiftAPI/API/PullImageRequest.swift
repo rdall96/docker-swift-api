@@ -1,5 +1,5 @@
 //
-//  Docker+PullImage.swift
+//  PullImageRequest.swift
 //  docker-swift-api
 //
 //  Created by Ricky Dall'Armellina on 11/16/25.

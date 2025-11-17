@@ -1,5 +1,5 @@
 //
-//  Docker+BuildImage.swift
+//  BuildRequest.swift
 //  docker-swift-api
 //
 //  Created by Ricky Dall'Armellina on 11/15/25.
@@ -9,7 +9,7 @@ import Foundation
 
 /// Build an image.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Image/operation/ImageBuild
-public struct DockerBuildImageRequest: DockerRequest {
+public struct DockerBuildRequest: DockerRequest {
     public typealias Response = Void
 
     public struct Query: Encodable {

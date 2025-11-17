@@ -77,7 +77,7 @@ struct DockerAPITests {
     @Test
     func buildImage() async throws {
         let buildDir = try #require(Bundle.module.url(forResource: "TestBuild", withExtension: nil))
-        let request = try DockerBuildImageRequest(
+        let request = try DockerBuildRequest(
             at: buildDir,
             ignoreFiles: [
                 "ignore_this_file.txt",

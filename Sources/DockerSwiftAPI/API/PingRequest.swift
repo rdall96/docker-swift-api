@@ -1,5 +1,5 @@
 //
-//  Docker+Ping.swift
+//  PingRequest.swift
 //  docker-swift-api
 //
 //  Created by Ricky Dall'Armellina on 11/15/25.

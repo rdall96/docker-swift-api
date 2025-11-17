@@ -1,5 +1,5 @@
 //
-//  Docker+RemoveImage.swift
+//  RemoveImageRequest.swift
 //  docker-swift-api
 //
 //  Created by Ricky Dall'Armellina on 11/16/25.
