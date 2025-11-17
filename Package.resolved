@@ -1,13 +1,13 @@
 {
-  "originHash" : "f4c268099f1f70480b51f1c668370a1370c9437e937f17064a746dbc3b924542",
+  "originHash" : "5a2c507e4f43bd8ece6c070a46d33a2dc56e0dc08ea661b2008f0a41d40feb04",
   "pins" : [
     {
       "identity" : "async-http-client",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-server/async-http-client.git",
       "state" : {
-        "revision" : "b2faff932b956df50668241d14f1b42f7bae12b4",
-        "version" : "1.30.0"
+        "revision" : "efb14fec9f79f3f8d4f2a6c0530303efb6fe6533",
+        "version" : "1.29.1"
       }
     },
     {
@@ -114,8 +114,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-nio",
       "state" : {
-        "revision" : "56724a2b6d8e2aed1b2c5f23865b9ea5c43f9977",
-        "version" : "2.89.0"
+        "revision" : "a18bddb0acf7a40d982b2f128ce73ce4ee31f352",
+        "version" : "2.86.2"
       }
     },
     {
