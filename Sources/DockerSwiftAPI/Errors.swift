@@ -10,10 +10,9 @@ import Foundation
 public enum DockerError: Error {
     case unknown
     case systemError(Error)
-    case requestFailed(String)
     case invalidRequest(Error)
+    case unsupportedRequestBody
+    case requestFailed(String)
     case failedToDecodeResponse(Error)
-    case notAuthenticated
-    case invalidAutheCredentials
     case imageNotFound
 }

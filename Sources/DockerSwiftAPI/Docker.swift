@@ -8,4 +8,6 @@
 import Foundation
 
 // Namespace to group all Docker types
-public enum Docker {}
+public enum Docker {
+    public typealias Socket = String
+}

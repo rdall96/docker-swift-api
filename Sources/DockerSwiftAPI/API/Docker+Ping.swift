@@ -1,29 +1,27 @@
 //
-//  DockerClient+Ping.swift
+//  Docker+Ping.swift
 //  docker-swift-api
 //
 //  Created by Ricky Dall'Armellina on 11/15/25.
 //
 
 import Foundation
-import NIOHTTP1
 
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/System/operation/SystemPing
-fileprivate struct PingRequest: DockerRequest {
+fileprivate struct DockerPingRequest: DockerRequest {
     typealias Query = Never
     typealias Body = Never
     typealias Response = Void
 
-    let method: HTTPMethod = .GET
-    let path: String = "/_ping"
+    let endpoint: String = "/_ping"
 }
 
-extension DockerClient {
+extension Docker {
     /// Check if the client is reachable.
-    public var isAvailable: Bool {
+    public static var isAvailable: Bool {
         get async {
             do {
-                try await run(PingRequest())
+                try await DockerPingRequest().start()
                 return true
             }
             catch {

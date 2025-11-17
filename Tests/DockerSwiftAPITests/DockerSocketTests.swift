@@ -1,5 +1,5 @@
 //
-//  UnixSocketTests.swift
+//  DockerSocketTests.swift
 //  docker-swift-api
 //
 //  Created by Ricky Dall'Armellina on 11/14/25.
@@ -12,13 +12,12 @@ import AsyncHTTPClient
 
 @testable import DockerSwiftAPI
 
-final class UnixSocketTests {
+final class DockerSocketTests {
 
-    private let socket: UnixSocket
+    private let socket: DockerSocket
 
     init() {
-        socket = UnixSocket("/var/run/docker.sock", hostname: "v1.51")
-        print(socket.description)
+        socket = DockerSocket("/var/run/docker.sock", hostname: "v1.51")
     }
 
     deinit {

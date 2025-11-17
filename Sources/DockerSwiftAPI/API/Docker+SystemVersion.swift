@@ -1,26 +1,26 @@
 //
-//  DockerClient+Version.swift
+//  Docker+SystemVersion.swift
 //  docker-swift-api
 //
 //  Created by Ricky Dall'Armellina on 11/15/25.
 //
 
 import Foundation
-import NIOHTTP1
 
+/// Fetch the version information from this client.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/System/operation/SystemVersion
-fileprivate struct VersionRequest: DockerRequest {
-    typealias Query = Never
-    typealias Body = Never
-    typealias Response = DockerClient.Version
+public struct DockerSystemVersionRequest: DockerRequest {
+    public typealias Query = Never
+    public typealias Body = Never
+    public typealias Response = Docker.SystemVersion
 
-    let method: HTTPMethod = .GET
-    let path: String = "/version"
+    public let endpoint: String = "/version"
+
+    public init() {}
 }
 
-extension DockerClient {
-
-    public struct Version: Decodable {
+extension Docker {
+    public struct SystemVersion: Decodable {
 
         public struct Platform: Decodable {
             public let name: String
@@ -58,13 +58,6 @@ extension DockerClient {
             case os = "Os"
             case architecture = "Arch"
             case kernelVersion = "KernelVersion"
-        }
-    }
-
-    /// Fetch the version information from this client.
-    public var version: Version {
-        get async throws {
-            try await run(VersionRequest())
         }
     }
 }
