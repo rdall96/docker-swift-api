@@ -52,7 +52,7 @@ internal final class UnixSocket: Sendable, CustomStringConvertible {
         method: HTTPMethod = .GET,
         body: HTTPClient.Body? = nil,
         headers: HTTPHeaders? = nil
-    ) async throws(UnixSocketError) -> HTTPClient.Response {
+    ) async throws -> HTTPClient.Response {
         // add Host header
         var headers = headers ?? [:]
         headers.add(name: "Host", value: hostname)
@@ -70,11 +70,11 @@ internal final class UnixSocket: Sendable, CustomStringConvertible {
         }
         catch let error as HTTPClientError {
             logger.error("Invalid request: \(error)")
-            throw .badRequest
+            throw UnixSocketError.badRequest
         }
         catch {
             logger.error("Request failed: \(error)")
-            throw .requestFailed(reason: error.localizedDescription)
+            throw UnixSocketError.requestFailed(reason: error.localizedDescription)
         }
 
         // Check response status and return
@@ -82,12 +82,12 @@ internal final class UnixSocket: Sendable, CustomStringConvertible {
         case .ok, .created, .accepted, .noContent:
             return response
         case .badRequest, .unauthorized, .forbidden, .notFound, .methodNotAllowed, .payloadTooLarge, .unsupportedMediaType:
-            throw .requestFailed(reason: response.status.description)
+            throw UnixSocketError.requestFailed(reason: response.status.description)
         case .internalServerError, .notImplemented, .badGateway, .serviceUnavailable, .gatewayTimeout:
-            throw .serverError(reason: response.status.description)
+            throw UnixSocketError.serverError(reason: response.status.description)
         default:
             logger.debug("[\(path)] Request failed due to an unknown error! \(response.status.description)")
-            throw .unknown
+            throw UnixSocketError.unknown
         }
     }
 }

@@ -42,13 +42,13 @@ fileprivate struct PullImageRequest: DockerRequest {
 
 extension DockerClient {
     /// Pull an image by name.
-    public func pull(_ image: String, tag: String = "latest") async throws(DockerError) {
+    public func pull(_ image: String, tag: String = "latest") async throws {
         let request = PullImageRequest(name: image, tag: tag)
         try await run(request)
     }
 
     /// Pull an image by digest.
-    public func pull(_ image: String, digest: String) async throws(DockerError) {
+    public func pull(_ image: String, digest: String) async throws {
         let request = PullImageRequest(name: image, digest: digest)
         try await run(request)
     }

@@ -21,23 +21,23 @@ fileprivate struct FetchImagesRequest: DockerRequest {
 extension DockerClient {
     /// List all images on the system.
     public var images: [Docker.Image] {
-        get async throws(DockerError) {
+        get async throws {
             try await run(FetchImagesRequest())
         }
     }
 
     /// List all images with the given name.
-    public func images(withName name: String) async throws(DockerError) -> [Docker.Image] {
+    public func images(withName name: String) async throws -> [Docker.Image] {
         try await images.filter { $0.tags.joined().contains(name) }
     }
 
     /// Returns details about an image with the given ID, if it exists.
-    public func image(with id: Docker.Image.ID) async throws(DockerError) -> Docker.Image? {
+    public func image(with id: Docker.Image.ID) async throws -> Docker.Image? {
         try await images.first { $0.id == id }
     }
 
     /// Returns details an image with the given name and tag, if it exists.
-    public func image(withName name: String, tag: String = "latest") async throws(DockerError) -> Docker.Image? {
+    public func image(withName name: String, tag: String = "latest") async throws -> Docker.Image? {
         try await images.first { $0.tags.contains("\(name):\(tag)") }
     }
 }

@@ -26,7 +26,7 @@ fileprivate struct PushImageRequest: DockerRequest {
 
 extension DockerClient {
     /// Push an image to a remote registry
-    public func pushImage(_ image: Docker.Image) async throws(DockerError) {
+    public func pushImage(_ image: Docker.Image) async throws {
         fatalError("Not implemented!")
     }
 }

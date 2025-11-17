@@ -26,7 +26,7 @@ public final class DockerClient {
     // MARK: - Run
 
     @discardableResult
-    private func result<T: DockerRequest>(for request: T) async throws(DockerError) -> HTTPClient.Response {
+    private func result<T: DockerRequest>(for request: T) async throws -> HTTPClient.Response {
         // Build the endpoint
         let endpoint: String
         do {
@@ -34,7 +34,7 @@ public final class DockerClient {
         }
         catch {
             logger.error("Failed to encode \(type(of: request)) endpoint: \(error)")
-            throw .invalidRequest(error)
+            throw DockerError.invalidRequest(error)
         }
 
         // Encode the body
@@ -48,7 +48,7 @@ public final class DockerClient {
             }
             catch {
                 logger.error("Failed to encode \(type(of: request)) body (\(type(of: encodable))): \(error)")
-                throw .invalidRequest(error)
+                throw DockerError.invalidRequest(error)
             }
         }
         else {
@@ -72,19 +72,19 @@ public final class DockerClient {
         }
         catch {
             logger.error("\(type(of: request)) failed: \(error)")
-            throw .systemError(error)
+            throw DockerError.systemError(error)
         }
     }
 
-    internal func run<Request: DockerRequest>(_ request: Request) async throws(DockerError) where Request.Response == Void {
+    internal func run<Request: DockerRequest>(_ request: Request) async throws where Request.Response == Void {
         try await result(for: request)
     }
 
-    internal func run<Request: DockerRequest>(_ request: Request) async throws(DockerError) -> Request.Response where Request.Response : Decodable {
+    internal func run<Request: DockerRequest>(_ request: Request) async throws -> Request.Response where Request.Response : Decodable {
         let result = try await result(for: request)
         guard let data = result.body else {
             logger.error("Missing response body for \(type(of: request))")
-            throw .unknown
+            throw DockerError.unknown
         }
 
         // Decode the response body
@@ -93,7 +93,7 @@ public final class DockerClient {
         }
         catch {
             logger.error("Failed to decode \(Request.Response.self): \(error)")
-            throw .failedToDecodeResponse(error)
+            throw DockerError.failedToDecodeResponse(error)
         }
     }
 }

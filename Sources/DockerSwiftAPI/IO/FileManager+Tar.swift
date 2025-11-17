@@ -9,8 +9,8 @@ import Foundation
 
 extension FileManager {
     func createTarGz(of source: URL, at destination: URL, excluding: [String]) throws {
-        let sourceDirectoryPath = source.path(percentEncoded: false)
-        let destinationFilePath = destination.path(percentEncoded: false)
+        let sourceDirectoryPath = source.path
+        let destinationFilePath = destination.path
 
         var arguments = ["-czf", "\(destinationFilePath)"]
         for excludePath in excluding {

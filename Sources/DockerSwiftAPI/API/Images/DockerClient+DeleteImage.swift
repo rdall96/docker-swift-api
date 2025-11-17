@@ -35,7 +35,7 @@ fileprivate struct DeleteImageRequest: DockerRequest {
 
 extension DockerClient {
     /// Delete an image.
-    public func deleteImage(with id: Docker.Image.ID, force: Bool = false, prune: Bool = true) async throws(DockerError) {
+    public func deleteImage(with id: Docker.Image.ID, force: Bool = false, prune: Bool = true) async throws {
         let request = DeleteImageRequest(imageID: id, force: force, noPrune: !prune)
         try await run(request)
     }

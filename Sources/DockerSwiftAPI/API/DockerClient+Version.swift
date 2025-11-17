@@ -63,7 +63,7 @@ extension DockerClient {
 
     /// Fetch the version information from this client.
     public var version: Version {
-        get async throws(DockerError) {
+        get async throws {
             try await run(VersionRequest())
         }
     }

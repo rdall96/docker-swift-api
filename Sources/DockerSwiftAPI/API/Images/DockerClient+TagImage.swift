@@ -33,7 +33,7 @@ fileprivate struct TagImageRequest: DockerRequest {
 
 extension DockerClient {
     /// Tag an image.
-    public func tagImage(with id: Docker.Image.ID, as name: String, tag: String = "latest") async throws(DockerError) {
+    public func tagImage(with id: Docker.Image.ID, as name: String, tag: String = "latest") async throws {
         let request = TagImageRequest(imageID: id, newName: name, newTag: tag)
         try await run(request)
     }

@@ -49,8 +49,8 @@ extension DockerClient {
         dockerFilePath: String = "Dockerfile",
         buildArgs: Docker.BuildArgs? = nil,
         labels: Docker.Labels? = nil,
-        useCache: Bool = true,
-    ) async throws(DockerError) -> Docker.Image {
+        useCache: Bool = true
+    ) async throws -> Docker.Image {
         let compressedFileURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(UUID().uuidString).tar.gz")
         defer { try? FileManager.default.removeItem(at: compressedFileURL) }
 
@@ -61,7 +61,7 @@ extension DockerClient {
         }
         catch {
             logger.error("Failed to pack build files at \(url): \(error)")
-            throw .systemError(error)
+            throw DockerError.systemError(error)
         }
 
         let imageName = BuildRequest.imageName(from: name)
@@ -85,7 +85,7 @@ extension DockerClient {
         // Find the newly built image and return it
         guard let image = try await image(withName: imageName, tag: tag) else {
             logger.critical("Image \(fullImageName) built with no errors, but no image found!")
-            throw .imageNotFound
+            throw DockerError.imageNotFound
         }
         return image
     }
