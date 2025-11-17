@@ -220,7 +220,7 @@ extension Docker.ContainerSpec {
                 return "\(hostPath):\(containerPath)"
             }
             else if let volume {
-                return "\(volume.name):\(containerPath)"
+                return "\(volume.id):\(containerPath)"
             }
             else {
                 return ""

@@ -89,4 +89,36 @@ struct DockerAPITests {
         let image = try await request.start()
         #expect(image.tags.contains("docker-swift-api-tests:buildImage"))
     }
+
+    @Test
+    func fetchVolumes() async throws {
+        let response = try await DockerVolumesRequest().start()
+        #expect(response.warnings == nil)
+        #expect(!response.volumes.isEmpty)
+    }
+
+    @Test
+    func inspectVolume() async throws {
+        // we don't know what volumes are on disk, so grab any and then re-request it
+        let volume = try #require(try await DockerVolumesRequest().start().volumes.first)
+        _ = try await DockerInspectVolumeRequest(volumeID: volume.id).start()
+    }
+
+    @Test
+    func createVolume() async throws {
+        let volume = try await DockerCreateVolumeRequest(id: "docker-swift-api-tests-\(UUID().uuidString)").start()
+        let exists = try await DockerVolumesRequest().start().volumes.contains { $0.id == volume.id }
+        #expect(exists)
+    }
+
+    @Test
+    func removeVolume() async throws {
+        let volume = try await DockerCreateVolumeRequest(id: "docker-swift-api-tests-\(UUID().uuidString)").start()
+        var exists = try await DockerVolumesRequest().start().volumes.contains { $0.id == volume.id }
+        #expect(exists)
+
+        try await volume.remove()
+        exists = try await DockerVolumesRequest().start().volumes.contains { $0.id == volume.id }
+        #expect(!exists)
+    }
 }

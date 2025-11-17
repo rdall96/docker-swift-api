@@ -8,55 +8,55 @@
 import Foundation
 
 extension Docker {
-    public struct Volume: Equatable, Hashable {
-        public let name: String
-        public let driver: String
-        
-        init(name: String, driver: String = "local") {
-            self.name = name
-            self.driver = driver
+    public struct Volume: Equatable, Hashable, Identifiable, Decodable {
+        public typealias ID = String
+
+        public enum Scope: String, Decodable {
+            case local
+            case global
         }
-    }
-}
 
-extension Docker.Volume: Decodable {
-    /*
-     {
-         "Availability": "N/A",
-         "Driver": "local",
-         "Group": "N/A",
-         "Labels": "com.docker.volume.anonymous=",
-         "Links": "N/A",
-         "Mountpoint": "/var/lib/docker/volumes/f84e22d8d0e2f705afb48f2989b875a5936fef001f044691ff5e548694621224/_data",
-         "Name": "f84e22d8d0e2f705afb48f2989b875a5936fef001f044691ff5e548694621224",
-         "Scope": "local",
-         "Size": "N/A",
-         "Status":"N/A"
-     }
-     */
-    
-    private enum CodingKeys: String, CodingKey {
-        case name = "Name"
-        case driver = "Driver"
-    }
-    
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        name = try container.decode(String.self, forKey: .name)
-        driver = try container.decode(String.self, forKey: .driver)
-    }
-}
+        public struct Options: Equatable, Hashable, Codable {
+            public let device: String
+            public let o: String
+            public let type: String
+        }
 
-extension Docker.Volume {
-    static func volumes(from text: String) -> [Docker.Volume] {
-        /*
-         {"Availability":"N/A","Driver":"local","Group":"N/A","Labels":"com.docker.volume.anonymous=","Links":"N/A","Mountpoint":"/var/lib/docker/volumes/f84e22d8d0e2f705afb48f2989b875a5936fef001f044691ff5e548694621224/_data","Name":"f84e22d8d0e2f705afb48f2989b875a5936fef001f044691ff5e548694621224","Scope":"local","Size":"N/A","Status":"N/A"}
-         {"Availability":"N/A","Driver":"local","Group":"N/A","Labels":"","Links":"N/A","Mountpoint":"/var/lib/docker/volumes/test_volume/_data","Name":"test_volume","Scope":"local","Size":"N/A","Status":"N/A"}
-         */
-        text.split(separator: "\n")
-            .compactMap { line in
-                guard let data = String(line).data(using: .utf8) else { return nil }
-                return try? JSONDecoder().decode(Docker.Volume.self, from: data)
+        public struct UsageData: Equatable, Hashable, Decodable {
+            public let size: Int64
+            public let refCount: Int64
+
+            private enum CodingKeys: String, CodingKey {
+                case size = "Size"
+                case refCount = "RefCount"
             }
+        }
+
+        /// The name of the volume.
+        public let id: ID
+        public let driver: String
+        public let mountpoint: String
+        private let createdAtString: String
+        public let status: [String : String]?
+        public let labels: Docker.Labels?
+        public let scope: Scope
+        public let options: Options?
+        public let usageData: UsageData?
+
+        public var createdAt: Date {
+            Helpers.date(from: createdAtString) ?? .distantPast
+        }
+
+        private enum CodingKeys: String, CodingKey {
+            case id = "Name"
+            case driver = "Driver"
+            case mountpoint = "Mountpoint"
+            case createdAtString = "CreatedAt"
+            case status = "Status"
+            case labels = "Labels"
+            case scope = "Scope"
+            case options = "Options"
+            case usageData = "UsageData"
+        }
     }
 }
