@@ -14,5 +14,7 @@ public enum DockerError: Error {
     case requestFailed(HTTPResponseStatus)
     case invalidRequest(Error)
     case failedToDecodeResponse(Error)
+    case notAuthenticated
+    case invalidAutheCredentials
     case imageNotFound
 }
