@@ -6,12 +6,11 @@
 //
 
 import Foundation
-import NIOHTTP1
 
 public enum DockerError: Error {
     case unknown
     case systemError(Error)
-    case requestFailed(HTTPResponseStatus)
+    case requestFailed(String)
     case invalidRequest(Error)
     case failedToDecodeResponse(Error)
     case notAuthenticated
