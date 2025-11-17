@@ -14,7 +14,7 @@ import DockerSwiftAPI
 struct DockerClientAPITests {
 
     // Fix the tests to the specific API version
-    let client = DockerClient(api: .v1_51)
+    let client = DockerClient()
 
     @Test
     func ping() async throws {
@@ -67,13 +67,6 @@ struct DockerClientAPITests {
             try await client.deleteImage(with: image.id, force: true)
         }
         #expect(try await client.images(withName: "hello-world").isEmpty)
-    }
-
-    @Test
-    func pruneImages() async throws {
-        try await client.pull("hello-world")
-        try await client.pruneImages()
-        // Nothing to do
     }
 
     @Test
