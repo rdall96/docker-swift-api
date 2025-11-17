@@ -2,157 +2,136 @@
 //  Container.swift
 //  docker-swift-api
 //
-//  Created by Ricky Dall'Armellina on 7/19/23.
+//  Created by Ricky Dall'Armellina on 11/17/25.
 //
 
 import Foundation
 
-// MARK: - Container
 extension Docker {
-    public struct Container: Equatable, Hashable {
+    public struct Container: Equatable, Hashable, Identifiable, Decodable {
+        public typealias ID = String
+
+        /// The state of a container.
+        public enum State: String, Decodable {
+            case created
+            case running
+            case paused
+            case restarting
+            case exited
+            case removing
+            case dead
+        }
+
+        /// A mount used by a container.
+        public struct Mount: Equatable, Hashable, Decodable {
+
+            /// The mount type.
+            public enum MountType: String, Decodable {
+                /// A mount of a file or directory from the host into the container.
+                case bind
+                /// A docker volume with the given Name.
+                case volume
+                /// A docker image.
+                case image
+                /// A tmpfs.
+                case tmpfs
+                /// A named pipe from the host into the container.
+                case npipe
+                /// A Swarm cluster volume.
+                case cluster
+            }
+
+            /// The mount type.
+            public let type: MountType
+
+            /// Name reference to the underlying data.
+            /// i.e.: the volume name.
+            public let name: String?
+
+            /// Source location of the mount.
+            ///
+            /// - For volumes, this contains the storage location of the volume (within /var/lib/docker/volumes/).
+            /// - For bind-mounts, and npipe, this contains the source (host) part of the bind-mount.
+            /// - For tmpfs mount points, this field is empty.
+            public let source: String
+
+            /// Destination is the path relative to the container root (`/`) where the Source is mounted inside the container.
+            public let destination: String
+
+            /// Driver is the volume driver used to create the volume (if it is a volume).
+            public let driver: String?
+
+            /// Mode is a comma separated list of options supplied by the user when creating the bind/volume mount.
+            ///
+            /// The default is platform-specific (`z` on Linux, empty on Windows).
+            public let mode: String
+
+            /// Whether the mount is mounted writable (read-write).
+            public let writable: Bool
+
+            private enum CodingKeys: String, CodingKey {
+                case type = "Type"
+                case name = "Name"
+                case source = "Source"
+                case destination = "Destination"
+                case driver = "Driver"
+                case mode = "Mode"
+                case writable = "RW"
+            }
+        }
+
+        /// The ID of this container as a 128-bit (64-character) hexadecimal string (32 bytes).
         public let id: String
-        public let name: String?
-        public let image: Image
-        
-        /// Create a container object from the docker command output and the given container specifications
-        init(_ id: String, name: String? = nil, image: Image) throws {
-            let id = id.replacingOccurrences(of: "\n", with: "")
-            // FIXME: (2025/11/16) This will get restored at a later date
-//            guard !id.isEmpty else {
-//                throw DockerError.missingContainerId
-//            }
-            self.id = id
-            self.name = name
-            self.image = image
+
+        /// The names associated with this container. Most containers have a single name, but when using legacy "links", the container can have multiple names.
+        ///
+        /// - NOTE: For historic reasons, names are prefixed with a forward-slash (`/`).
+        public let names: [String]
+
+        /// The ID (digest) of the image that this container was created from.
+        public let imageID: Docker.Image.ID
+
+        /// Command to run when starting the container.
+        public let command: String
+
+        /// Date and time at which the container was created.
+        public let createdAt: Date
+
+        /// Port-mappings for the container.
+        public let ports: [Docker.Container.PortMap]
+
+        /// The size of files that have been created or changed by this container.
+        public let sizeBytes: Int64?
+
+        /// The total size of all files in the read-only layers from the image that the container uses.
+        /// These layers can be shared between containers.
+        public let totalSizeBytes: Int64?
+
+        /// User-defined key/value metadata.
+        public let labels: Docker.Labels?
+
+        /// The state of this container.
+        public let state: State
+
+        /// Additional human-readable status of this container (i.e.: `Exit 0`)
+        public let statusDescription: String
+
+        /// List of mounts used by the container.
+        public let mounts: [Mount]
+
+        private enum CodingKeys: String, CodingKey {
+            case id = "Id"
+            case names = "Names"
+            case imageID = "ImageID"
+            case command = "Command"
+            case createdAt = "Created"
+            case ports = "Ports"
+            case sizeBytes = "SizeRw"
+            case totalSizeBytes = "SizeRootFs"
+            case labels = "Labels"
+            case state = "State"
+            case statusDescription = "Status"
+            case mounts = "Mounts"
         }
-    }
-}
-
-// MARK: - Container Status
-extension Docker.Container {
-    public enum Status {
-        case created
-        case running
-        case restarting
-        case exited
-        case paused
-        case unknown
-        
-        init(from description: String) {
-            switch description.lowercased() {
-            case "created":
-                self = .created
-            case "running":
-                self = .running
-            case "restarting":
-                self = .restarting
-            case "exited":
-                self = .exited
-            default:
-                self = .unknown
-            }
-        }
-    }
-}
-
-// MARK: - Container Stats
-extension Docker.Container {
-    public struct Stats {
-        public let cpuPercent: Double
-        public let memoryPercent: Double
-        public let memoryUsageBytes: UInt
-        public let memoryLimitBytes: UInt
-        public let networkDownloadBytes: UInt
-        public let networkUploadBytes: UInt
-        
-        init(
-            cpuPercent: Double,
-            memoryPercent: Double,
-            memoryUsageBytes: UInt,
-            memoryLimitBytes: UInt,
-            networkDownloadBytes: UInt,
-            networkUploadBytes: UInt
-        ) {
-            self.cpuPercent = cpuPercent
-            self.memoryPercent = memoryPercent
-            self.memoryUsageBytes = memoryUsageBytes
-            self.memoryLimitBytes = memoryLimitBytes
-            self.networkDownloadBytes = networkDownloadBytes
-            self.networkUploadBytes = networkUploadBytes
-        }
-    }
-}
-
-extension Docker.Container.Stats: Decodable {
-    /*
-     {
-         "BlockIO": "0B / 0B",
-         "CPUPerc": "0.00%",
-         "Container": "626c0c043861",
-         "ID": "626c0c043861",
-         "MemPerc": "0.00%",
-         "MemUsage": "0B / 0B",
-         "Name": "quizzical_hellman",
-         "NetIO": "0B / 0B",
-         "PIDs": "0"
-     }
-     */
-    
-    private enum CodingKeys: String, CodingKey {
-        case cpuPercent = "CPUPerc"
-        case memoryPercent = "MemPerc"
-        case memoryBytes = "MemUsage"
-        case networkBytes = "NetIO"
-    }
-    
-    private init(
-        cpuPercent: String,
-        memoryPercent: String,
-        memoryBytes: String,
-        networkBytes: String
-    ) {
-        self.cpuPercent = Double(cpuPercent.replacingOccurrences(of: "%", with: "")) ?? 0
-        self.memoryPercent = Double(memoryPercent.replacingOccurrences(of: "%", with: "")) ?? 0
-        
-        let memory = memoryBytes.split(separator: "/")
-            .compactMap {
-                String($0)
-                    .replacingOccurrences(of: " ", with: "")
-                    .replacingOccurrences(of: "B", with: "")
-            }
-        self.memoryUsageBytes = (memory.count == 2) ? (UInt(memory[0]) ?? 0) : 0
-        self.memoryLimitBytes = (memory.count == 2) ? (UInt(memory[1]) ?? 0) : 0
-        
-        let network = networkBytes.split(separator: "/")
-            .compactMap {
-                String($0)
-                    .replacingOccurrences(of: " ", with: "")
-                    .replacingOccurrences(of: "B", with: "")
-            }
-        self.networkDownloadBytes = (network.count == 2) ? (UInt(network[0]) ?? 0) : 0
-        self.networkUploadBytes = (network.count == 2) ? (UInt(network[1]) ?? 0) : 0
-    }
-    
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.init(
-            cpuPercent: try container.decode(String.self, forKey: .cpuPercent),
-            memoryPercent: try container.decode(String.self, forKey: .memoryPercent),
-            memoryBytes: try container.decode(String.self, forKey: .memoryBytes),
-            networkBytes: try container.decode(String.self, forKey: .networkBytes)
-        )
-    }
-}
-
-extension Docker.Container.Stats {
-    static var empty: Docker.Container.Stats {
-        .init(
-            cpuPercent: 0,
-            memoryPercent: 0,
-            memoryUsageBytes: 0,
-            memoryLimitBytes: 0,
-            networkDownloadBytes: 0,
-            networkUploadBytes: 0
-        )
     }
 }

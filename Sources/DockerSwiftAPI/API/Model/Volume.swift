@@ -22,30 +22,34 @@ extension Docker {
             public let type: String
         }
 
-        public struct UsageData: Equatable, Hashable, Decodable {
-            public let size: Int64
-            public let refCount: Int64
-
-            private enum CodingKeys: String, CodingKey {
-                case size = "Size"
-                case refCount = "RefCount"
-            }
-        }
-
         /// The name of the volume.
         public let id: ID
-        public let driver: String
-        public let mountpoint: String
-        private let createdAtString: String
-        public let status: [String : String]?
-        public let labels: Docker.Labels?
-        public let scope: Scope
-        public let options: Options?
-        public let usageData: UsageData?
 
+        /// Name of the volume driver used by the volume.
+        public let driver: String
+
+        /// Mount path of the volume on the host.
+        public let mountpoint: String
+
+        private let createdAtString: String
+        /// Date/Time the volume was created.
+        /// Defaults to `distantPast` if the timestamp data is invalid.
         public var createdAt: Date {
             Helpers.date(from: createdAtString) ?? .distantPast
         }
+
+        /// Low-level details about the volume, provided by the volume driver.
+        /// This field is optional, and is omitted if the volume driver does not support this feature.
+        public let status: [String : String]?
+
+        /// User-defined key/value metadata.
+        public let labels: Docker.Labels?
+
+        /// The level at which the volume exists. Either `global` for cluster-wide, or `local` for machine level.
+        public let scope: Scope
+
+        /// The driver specific options used when creating the volume.
+        public let options: Options?
 
         private enum CodingKeys: String, CodingKey {
             case id = "Name"
@@ -56,7 +60,6 @@ extension Docker {
             case labels = "Labels"
             case scope = "Scope"
             case options = "Options"
-            case usageData = "UsageData"
         }
     }
 }

@@ -86,7 +86,7 @@ extension DockerRequest {
     internal var path: String {
         get throws {
             // If there is no query, the path is just the endpoint
-            guard let queryDictionary = try queryDictionary else {
+            guard let queryDictionary = try queryDictionary, !queryDictionary.isEmpty else {
                 return endpoint
             }
             // Add the query parameters to the path

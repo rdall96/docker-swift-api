@@ -29,13 +29,28 @@ extension Docker {
         }
 
         public let platform: Platform
+
+        /// Information about system components
         public let components: [Component]
+
+        /// The version of the daemon.
         public let version: Docker.Version
+
+        /// The default (and highest) API version that is supported by the daemon.
         public let apiVersion: Docker.Version
+
+        /// The minimum API version that is supported by the daemon.
         public let minApiVersion: Docker.Version
-        public let os: String
+
+        /// The operating system that the daemon is running on.
+        public let os: Docker.OS
+
+        /// The architecture that the daemon is running on.
         public let architecture: Docker.Architecture
-        public let kernelVersion: String
+
+        /// The kernel version (`uname -r`) that the daemon is running on.
+        /// This field is omitted when empty.
+        public let kernelVersion: String?
 
         private enum CodingKeys: String, CodingKey {
             case platform = "Platform"

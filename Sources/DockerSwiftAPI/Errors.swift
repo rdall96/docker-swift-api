@@ -15,4 +15,5 @@ public enum DockerError: Error {
     case requestFailed(String)
     case failedToDecodeResponse(Error)
     case imageNotFound
+    case containerAlreadyExists
 }

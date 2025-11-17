@@ -8,6 +8,9 @@
 import Foundation
 
 extension Docker {
+    /// Users pass these values at build-time.
+    /// Docker uses the buildargs as the environment context for commands run via the Dockerfile RUN instruction, or for variable expansion in other Dockerfile instructions.
+    /// - NOTE: This is not meant for passing secret values.
     public struct BuildArgs: Equatable, Hashable {
         internal var args: [String : String]
 
