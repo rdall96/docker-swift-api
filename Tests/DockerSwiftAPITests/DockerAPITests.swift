@@ -20,7 +20,7 @@ struct DockerAPITests {
 
     @Test
     func systemVersion() async throws {
-        let version = try await DockerSystemVersionRequest().start()
+        let version = try await Docker.systemVersion
         #expect(version.platform.name.isEmpty == false)
         #expect(version.components.isEmpty == false)
         #expect(version.version.major >= 27)
@@ -30,7 +30,7 @@ struct DockerAPITests {
 
     @Test
     func fetchImages() async throws {
-        _ = try await DockerImagesRequest().start()
+        _ = try await DockerImagesRequest.all
         // there's no point in checking anything here
         // since we don't know what images might be on the host that runs the tests
     }
@@ -38,14 +38,14 @@ struct DockerAPITests {
     @Test
     func pullImageByTag() async throws {
         try await DockerPullImageRequest(name: "hello-world", tag: "linux").start()
-        _ = try #require(try await DockerImagesRequest().image(withName: "hello-world", tag: "linux"))
+        _ = try #require(try await DockerImagesRequest.image(withName: "hello-world", tag: "linux"))
     }
 
     @Test(.disabled("Not Impelemented"))
     func pullImageByDigest() async throws {
         try await DockerPullImageRequest(name: "hello-world", digest: "").start()
 
-        let image = try await DockerImagesRequest().start().first {
+        let image = try await DockerImagesRequest.all.first {
             $0.tags.contains("")
         }
         #expect(image != nil)
@@ -54,10 +54,10 @@ struct DockerAPITests {
     @Test
     func tagImage() async throws {
         try await DockerPullImageRequest(name: "hello-world").start()
-        let image = try #require(try await DockerImagesRequest().image(withName: "hello-world"))
+        let image = try #require(try await DockerImagesRequest.image(withName: "hello-world"))
 
         try await image.tag(name: "docker-swift-api-tests", tag: "tagImage")
-        let newImage = try #require(try await DockerImagesRequest().image(
+        let newImage = try #require(try await DockerImagesRequest.image(
             withName: "docker-swift-api-tests",
             tag: "tagImage"
         ))
@@ -68,10 +68,10 @@ struct DockerAPITests {
     @Test
     func deleteImages() async throws {
         try await DockerPullImageRequest(name: "hello-world").start()
-        for image in try await DockerImagesRequest().images(withName: "hello-world") {
+        for image in try await DockerImagesRequest.images(withName: "hello-world") {
             try await image.remove(force: true)
         }
-        #expect(try await DockerImagesRequest().images(withName: "hello-world").isEmpty)
+        #expect(try await DockerImagesRequest.images(withName: "hello-world").isEmpty)
     }
 
     @Test
@@ -92,33 +92,29 @@ struct DockerAPITests {
 
     @Test
     func fetchVolumes() async throws {
-        let response = try await DockerVolumesRequest().start()
-        #expect(response.warnings == nil)
-        #expect(!response.volumes.isEmpty)
+        let volumes = try await DockerVolumesRequest.all
+        #expect(!volumes.isEmpty)
     }
 
     @Test
     func inspectVolume() async throws {
         // we don't know what volumes are on disk, so grab any and then re-request it
-        let volume = try #require(try await DockerVolumesRequest().start().volumes.first)
+        let volume = try #require(try await DockerVolumesRequest.all.first)
         _ = try await DockerInspectVolumeRequest(volumeID: volume.id).start()
     }
 
     @Test
     func createVolume() async throws {
         let volume = try await DockerCreateVolumeRequest(id: "docker-swift-api-tests-\(UUID().uuidString)").start()
-        let exists = try await DockerVolumesRequest().start().volumes.contains { $0.id == volume.id }
-        #expect(exists)
+        _ = try #require(try await DockerVolumesRequest.volume(id: volume.id))
     }
 
     @Test
     func removeVolume() async throws {
         let volume = try await DockerCreateVolumeRequest(id: "docker-swift-api-tests-\(UUID().uuidString)").start()
-        var exists = try await DockerVolumesRequest().start().volumes.contains { $0.id == volume.id }
-        #expect(exists)
+        _ = try #require(try await DockerVolumesRequest.volume(id: volume.id))
 
         try await volume.remove()
-        exists = try await DockerVolumesRequest().start().volumes.contains { $0.id == volume.id }
-        #expect(!exists)
+        #expect(try await DockerVolumesRequest.volume(id: volume.id) == nil)
     }
 }

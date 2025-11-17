@@ -16,7 +16,17 @@ public struct DockerVolumesRequest: DockerRequest {
 
     public let endpoint: String = "/volumes"
 
-    public init() {}
+    private init() {}
+
+    public static var all: [Docker.Volume] {
+        get async throws {
+            try await DockerVolumesRequest().start().volumes
+        }
+    }
+
+    public static func volume(id: Docker.Volume.ID) async throws -> Docker.Volume? {
+        try await all.first { $0.id == id }
+    }
 }
 
 extension Docker {
