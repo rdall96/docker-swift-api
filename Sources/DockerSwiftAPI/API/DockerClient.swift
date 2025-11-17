@@ -15,7 +15,6 @@ public final class DockerClient {
 
     private let socket: Socket
 
-    internal var authToken: String? = nil
     internal let logger: Logger
 
     /// Initialize a Docker client object by connecting to a Unix socket.
@@ -59,9 +58,6 @@ public final class DockerClient {
         // Setup headers
         var headers = HTTPHeaders()
         headers.add(name: "Content-Type", value: request.contentType.rawValue)
-        if let authToken {
-            headers.add(name: "X-Registry-Auth", value: authToken)
-        }
 
         // Run the request
         let socket = UnixSocket(socket, hostname: request.api.version, logger: logger)
