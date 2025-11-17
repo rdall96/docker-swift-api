@@ -19,6 +19,7 @@ internal protocol DockerRequest {
     typealias ContentType = DockerRequestContentType
     associatedtype Response
 
+    var api: Docker.API { get }
     var method: HTTPMethod { get }
     var path: String { get }
     var query: Query? { get }
@@ -27,6 +28,7 @@ internal protocol DockerRequest {
 }
 
 extension DockerRequest {
+    var api: Docker.API { .v1_51 }
     var query: Query? { nil }
     var body: Body? { nil }
     var contentType: ContentType { .json }

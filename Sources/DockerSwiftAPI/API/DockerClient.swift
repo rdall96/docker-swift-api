@@ -13,18 +13,14 @@ import Logging
 public final class DockerClient {
     public typealias Socket = String
 
-    private let socket: UnixSocket
+    private let socket: Socket
+
     internal let logger: Logger
 
     /// Initialize a Docker client object by connecting to a Unix socket.
-    /// You can specify which API version to use, but note that some features might not work properly.
-    public init(name: String = "docker-local", socket: Socket = "/var/run/docker.sock", api: Docker.API = .latest) {
-        logger = Logger(label: name)
-        self.socket = UnixSocket(socket, hostname: api.rawValue, logger: logger)
-    }
-
-    deinit {
-        socket.shutdown()
+    public init(socket: Socket = "/var/run/docker.sock", logger: Logger? = nil) {
+        self.socket = socket
+        self.logger = logger ?? Logger(label: "docker-client")
     }
 
     // MARK: - Run
@@ -64,6 +60,8 @@ public final class DockerClient {
         headers.add(name: "Content-Type", value: request.contentType.rawValue)
 
         // Run the request
+        let socket = UnixSocket(socket, hostname: request.api.version, logger: logger)
+        defer { socket.shutdown() }
         do {
             return try await socket.run(
                 endpoint,
