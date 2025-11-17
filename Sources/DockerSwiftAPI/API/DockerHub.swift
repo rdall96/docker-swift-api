@@ -118,7 +118,7 @@ extension DockerHub {
     }
     
     public struct Image: Decodable, Hashable {
-        public let architecture: Docker.Platform.Architecture
+        public let architecture: Docker.Architecture
         public let features: String
         public let digest: String
         public let os: String

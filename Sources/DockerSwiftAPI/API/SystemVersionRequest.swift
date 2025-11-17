@@ -46,7 +46,7 @@ extension Docker {
         public let apiVersion: Docker.Version
         public let minApiVersion: Docker.Version
         public let os: String
-        public let architecture: String
+        public let architecture: Docker.Architecture
         public let kernelVersion: String
 
         private enum CodingKeys: String, CodingKey {

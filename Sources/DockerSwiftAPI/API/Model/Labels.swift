@@ -11,11 +11,11 @@ extension Docker {
     public struct Labels: Equatable, Hashable {
         internal var labels: [String : String]
 
-        init(_ labels: [String : String] = [:]) {
+        public init(_ labels: [String : String] = [:]) {
             self.labels = labels
         }
 
-        mutating func add(name: String, value: String) {
+        public mutating func add(name: String, value: String) {
             labels[name] = value
         }
     }

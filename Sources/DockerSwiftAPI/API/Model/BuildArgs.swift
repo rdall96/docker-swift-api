@@ -11,11 +11,11 @@ extension Docker {
     public struct BuildArgs: Equatable, Hashable {
         internal var args: [String : String]
 
-        init(_ args: [String : String] = [:]) {
+        public init(_ args: [String : String] = [:]) {
             self.args = args
         }
 
-        mutating func add(name: String, value: String) {
+        public mutating func add(name: String, value: String) {
             args[name] = value
         }
     }

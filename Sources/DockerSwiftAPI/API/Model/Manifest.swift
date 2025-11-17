@@ -1,6 +1,6 @@
 //
 //  Manifest.swift
-//
+//  docker-swift-api
 //
 //  Created by Ricky Dall'Armellina on 8/24/23.
 //
@@ -8,7 +8,8 @@
 import Foundation
 
 extension Docker {
-    public struct Manifest: Equatable, Hashable {
+    // unused
+    internal struct Manifest: Equatable, Hashable {
         public let ref: String
         public let descriptor: Descriptor
         public let config: Schema
@@ -106,23 +107,5 @@ extension Docker.Manifest.Schema: Decodable {
     private enum CodingKeys: String, CodingKey {
         case size
         case digest
-    }
-}
-
-extension Docker.Manifest {
-    init?(from json: String) {
-        guard let data = json.data(using: .utf8),
-              let manifest = try? JSONDecoder().decode(Docker.Manifest.self, from: data)
-        else {
-            return nil
-        }
-        self = manifest
-    }
-    
-    static func manifests(from json: String) throws -> [Self] {
-        guard let data = json.data(using: .utf8) else {
-            return []
-        }
-        return try JSONDecoder().decode([Docker.Manifest].self, from: data)
     }
 }

@@ -1,46 +1,25 @@
 //
 //  Platform.swift
+//  docker-swift-api
 //
-//
-//  Created by Ricky Dall'Armellina on 8/24/23.
+//  Created by Ricky Dall'Armellina on 11/17/25.
 //
 
 import Foundation
 
 extension Docker {
-    public struct Platform: Equatable, Hashable {
-        public let architecture: Architecture
-        public let operatingSystem: String
-    }
-}
+    public struct Platform: Equatable, Hashable, Decodable {
 
-extension Docker.Platform {
-    public struct Architecture: Equatable, Hashable, Decodable, RawRepresentable {
-        public var rawValue: String
-        
-        public init(rawValue: String) {
-            self.rawValue = rawValue
+        public let architecture: Docker.Architecture
+        public let os: String
+        public let osVersion: String?
+        public let variant: String?
+
+        private enum CodingKeys: String, CodingKey {
+            case architecture
+            case os
+            case osVersion = "os.version"
+            case variant
         }
-        
-        public static let x86 = Self(rawValue: "x86")
-        public static let amd64 = Self(rawValue: "amd64")
-        public static let aarch64 = Self(rawValue: "aarch64")
-        public static let arm = Self(rawValue: "arm")
-        public static let arm64 = Self(rawValue: "arm64")
-        public static let arm64e = Self(rawValue: "arm64e")
-        // more? (probably...)
-    }
-}
-
-extension Docker.Platform: Decodable {
-    /**
-     {
-         "architecture": "amd64",
-         "os": "linux"
-     }
-     */
-    private enum CodingKeys: String, CodingKey {
-        case architecture
-        case operatingSystem = "os"
     }
 }
