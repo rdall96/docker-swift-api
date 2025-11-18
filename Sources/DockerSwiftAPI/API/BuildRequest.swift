@@ -76,8 +76,8 @@ public struct DockerBuildRequest: DockerRequest {
     }
 
     /// Run the request and return the newly built image object.
-    public func start() async throws -> Docker.Image {
-        try await run()
+    public func start(timeout: Int64? = nil) async throws -> Docker.Image {
+        try await run(timeout: timeout)
 
         // Find the newly built image and return it
         guard let image = try await DockerImagesRequest.image(withName: imageName, tag: imageTag) else {

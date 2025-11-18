@@ -14,6 +14,7 @@ import Logging
 internal enum DockerSocketError: Error {
     case unknown
     case badRequest
+    case requestTimedOut
     case requestFailed(reason: String)
     case serverError(reason: String)
 }
@@ -51,11 +52,17 @@ internal final class DockerSocket: Sendable {
         _ path: String,
         method: HTTPMethod = .GET,
         body: HTTPClient.Body? = nil,
-        headers: HTTPHeaders? = nil
+        headers: HTTPHeaders? = nil,
+        timeout: Int64? = nil
     ) async throws -> HTTPClient.Response {
         // add Host header
         var headers = headers ?? [:]
         headers.add(name: "Host", value: hostname)
+
+        var deadline: NIODeadline?
+        if let timeout {
+            deadline = .now() + .seconds(timeout)
+        }
 
         let response: HTTPClient.Response
         do {
@@ -65,12 +72,19 @@ internal final class DockerSocket: Sendable {
                 path: "/\(hostname)/\(path)",
                 body: body,
                 headers: headers,
+                deadline: deadline,
                 logger: logger
             )
         }
         catch let error as HTTPClientError {
-            logger.error("Invalid request: \(error)")
-            throw DockerSocketError.badRequest
+            if case .deadlineExceeded = error {
+                logger.error("Request timed out!")
+                throw DockerSocketError.requestTimedOut
+            }
+            else {
+                logger.error("Invalid request: \(error)")
+                throw DockerSocketError.badRequest
+            }
         }
         catch {
             logger.error("Request failed: \(error)")

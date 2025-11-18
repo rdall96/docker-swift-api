@@ -11,13 +11,13 @@ import AsyncHTTPClient
 
 extension DockerRequest {
     /// Run the request and don't return anything.
-    public func start() async throws where Response == Void {
-        try await run()
+    public func start(timeout: Int64? = nil) async throws where Response == Void {
+        try await run(timeout: timeout)
     }
 
     /// Run the request and decode the response.
-    public func start() async throws -> Response where Response : Decodable {
-        let result = try await run()
+    public func start(timeout: Int64? = nil) async throws -> Response where Response : Decodable {
+        let result = try await run(timeout: timeout)
         guard let response = result.body else {
             logger.error("Missing response body \(Response.self)")
             throw DockerError.unknown
@@ -38,7 +38,7 @@ extension DockerRequest {
 
 internal extension DockerRequest {
     @discardableResult
-    func run(on socket: Docker.Socket? = nil) async throws -> HTTPClient.Response {
+    func run(on socket: Docker.Socket? = nil, timeout: Int64? = nil) async throws -> HTTPClient.Response {
         // Build the path
         let requestPath: String
         do {
@@ -82,7 +82,8 @@ internal extension DockerRequest {
                 requestPath,
                 method: self.method.httpMethod,
                 body: requestBody,
-                headers: headers
+                headers: headers,
+                timeout: timeout
             )
         }
         catch {
