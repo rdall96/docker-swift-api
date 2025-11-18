@@ -18,8 +18,7 @@ public struct DockerBuildRequest: DockerRequest {
         let noCache: Bool
         let buildArgs: [String : String]?
         let labels: [String : String]?
-        // FIXME: Figure out how to use version 2: [BuildKit](https://github.com/moby/buildkit)
-        let version: String = "1"
+        let version: String
 
         private enum CodingKeys: String, CodingKey {
             case dockerFile = "DockerFile"
@@ -48,7 +47,8 @@ public struct DockerBuildRequest: DockerRequest {
         dockerFilePath: String = "Dockerfile",
         buildArgs: Docker.BuildArgs? = nil,
         labels: Docker.Labels? = nil,
-        useCache: Bool = true
+        useCache: Bool = true,
+        useBuildKit: Bool = false
     ) throws {
         imageName = Self.sanitizeImageName(name)
         imageTag = tag
@@ -59,7 +59,8 @@ public struct DockerBuildRequest: DockerRequest {
             tag: "\(imageName):\(tag)",
             noCache: !useCache,
             buildArgs: buildArgs?.args,
-            labels: labels?.labels
+            labels: labels?.labels,
+            version: useBuildKit ? "2" : "1"
         )
 
         // Pack up the build context directory, load the data and remove any tempoary files
