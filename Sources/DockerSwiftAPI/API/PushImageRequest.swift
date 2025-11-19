@@ -24,8 +24,22 @@ public struct DockerPushImageRequest: DockerRequest {
 
     /// Push an image to a remote registry.
     /// If you don't specify a tag for the image, all local tags will be pushed.
-    public init(image: Docker.Image, tag: Docker.Image.Tag?, auth: DockerAuthenticationContext) {
-        endpoint = "/images/\(image.id)/push"
+    public init(image: Docker.Image, tag: Docker.Image.Tag?, auth: DockerAuthenticationContext) throws {
+        // ensure the image has at least one valid tag
+        if image.tags.isEmpty {
+            throw DockerError.invalidTag
+        }
+        // ensure the requested tag exists for this image
+        if let tag, !image.tags.contains(tag) {
+            throw DockerError.invalidTag
+        }
+
+        // we already validated that the image has at least one tag, so this should never fail
+        guard let imageName = tag?.name ?? image.tags.first?.name else {
+            throw DockerError.unknown
+        }
+
+        endpoint = "/images/\(imageName)/push"
         query = .init(tag: tag?.tag)
         authContext = auth
     }
