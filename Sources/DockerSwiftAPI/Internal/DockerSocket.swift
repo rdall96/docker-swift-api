@@ -78,16 +78,13 @@ internal final class DockerSocket: Sendable {
         }
         catch let error as HTTPClientError {
             if case .deadlineExceeded = error {
-                logger.error("Request timed out!")
                 throw DockerSocketError.requestTimedOut
             }
             else {
-                logger.error("Invalid request: \(error)")
                 throw DockerSocketError.badRequest
             }
         }
         catch {
-            logger.error("Request failed: \(error)")
             throw DockerSocketError.requestFailed(reason: error.localizedDescription)
         }
 
