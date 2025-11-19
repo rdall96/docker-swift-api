@@ -46,6 +46,9 @@ public protocol DockerRequest {
     /// The content type of the request payload.
     var contentType: ContentType { get }
 
+    /// Authentication context for the request.
+    var authContext: DockerAuthenticationContext? { get }
+
     var logger: Logger { get }
 }
 
@@ -57,6 +60,7 @@ public extension DockerRequest {
     var query: Query? { nil }
     var body: Body? { nil }
     var contentType: ContentType { .json }
+    var authContext: DockerAuthenticationContext? { nil }
     var logger: Logger { Logger(label: "\(type(of: self))") }
 }
 

@@ -174,4 +174,18 @@ struct DockerAPITests {
         try await container.remove(removeUnusedVolumes: true)
         #expect(try await DockerContainersRequest.named("DockerSwiftAPITests") == nil)
     }
+
+    @Test(.disabled("Requires an image and auth credentials"))
+    func pushImage() async throws {
+        let authContext = DockerAuthenticationContext(
+            username: "",
+            password: ""
+        )
+        let pushRequest = DockerPushImageRequest(
+            image: "",
+            tag: "",
+            auth: authContext
+        )
+        try await pushRequest.start()
+    }
 }

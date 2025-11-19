@@ -73,6 +73,18 @@ internal extension DockerRequest {
         // Setup headers
         var headers = HTTPHeaders()
         headers.add(name: "Content-Type", value: self.contentType.rawValue)
+        if let authContext {
+            // encode auth
+            let token: String
+            do {
+                token = try JSONEncoder().encode(authContext).base64EncodedString()
+            }
+            catch {
+                logger.error("Failed to encode authentication context: \(error)")
+                throw DockerError.invalidRequest(error)
+            }
+            headers.add(name: "X-Registry-Auth", value: token)
+        }
 
         // Run the request
         let socket = DockerSocket(socket, hostname: self.api.version, logger: logger)

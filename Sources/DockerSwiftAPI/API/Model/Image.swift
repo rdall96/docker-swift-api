@@ -71,3 +71,13 @@ extension Docker.Image: CustomStringConvertible {
         "[\(id)] \(tags.joined(separator: ", "))"
     }
 }
+
+extension Docker.Image {
+    internal var namesAndTags: [(name: String, tag: String)] {
+        tags.reduce(into: []) { tags, tag in
+            let components = tag.split(separator: ":", maxSplits: 1).map(String.init)
+            guard components.count == 2 else { return }
+            tags.append((components[0], components[1]))
+        }
+    }
+}
