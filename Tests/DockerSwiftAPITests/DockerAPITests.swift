@@ -37,37 +37,35 @@ struct DockerAPITests {
 
     @Test
     func pullImageByTag() async throws {
-        try await DockerPullImageRequest(name: "hello-world", tag: "linux").start()
-        _ = try #require(try await DockerImagesRequest.image(withName: "hello-world", tag: "linux"))
+        let tag = Docker.Image.Tag(name: "hello-world", tag: "linux")
+        try await DockerPullImageRequest(tag).start()
+        _ = try #require(try await DockerImagesRequest.image(tag: tag))
     }
 
     @Test(.disabled("Not Impelemented"))
     func pullImageByDigest() async throws {
-        try await DockerPullImageRequest(name: "hello-world", digest: "").start()
+        try await DockerPullImageRequest(imageName: "hello-world", digest: "").start()
 
-        let image = try await DockerImagesRequest.all.first {
-            $0.tags.contains("")
-        }
+        let image = try await DockerImagesRequest.all.first { _ in false }
         #expect(image != nil)
     }
 
     @Test
     func tagImage() async throws {
-        try await DockerPullImageRequest(name: "hello-world").start()
-        let image = try #require(try await DockerImagesRequest.image(withName: "hello-world"))
+        let tag = Docker.Image.Tag(name: "hello-world")
+        try await DockerPullImageRequest(tag).start()
+        let image = try #require(try await DockerImagesRequest.image(tag: tag))
 
-        try await image.tag(name: "docker-swift-api-tests", tag: "tagImage")
-        let newImage = try #require(try await DockerImagesRequest.image(
-            withName: "docker-swift-api-tests",
-            tag: "tagImage"
-        ))
+        let newTag = Docker.Image.Tag(name: "docker-swift-api-tests", tag: "tagImage")
+        let newImage = try await image.tag(newTag)
 
         #expect(newImage.id == image.id)
     }
 
     @Test
     func deleteImages() async throws {
-        try await DockerPullImageRequest(name: "hello-world").start()
+        let tag = Docker.Image.Tag(name: "hello-world")
+        try await DockerPullImageRequest(tag).start()
         for image in try await DockerImagesRequest.images(withName: "hello-world") {
             try await image.remove(force: true)
         }
@@ -77,17 +75,17 @@ struct DockerAPITests {
     @Test
     func buildImage() async throws {
         let buildDir = try #require(Bundle.module.url(forResource: "TestBuild", withExtension: nil))
+        let tag = Docker.Image.Tag(name: "docker-swift-api-tests", tag: "buildImage")
         let request = try DockerBuildRequest(
             at: buildDir,
             ignoreFiles: [
                 "ignore_this_file.txt",
             ],
-            name: "docker-swift-api-tests",
-            tag: "buildImage",
+            tag: tag,
             useCache: false
         )
         let image = try await request.start()
-        #expect(image.tags.contains("docker-swift-api-tests:buildImage"))
+        #expect(image.tags.contains(tag))
     }
 
     @Test
@@ -138,6 +136,7 @@ struct DockerAPITests {
 
     @Test
     func createContainer() async throws {
+        try await DockerPullImageRequest(.init(name: "rdall96/minecraft-server")).start()
         let volume = try await DockerCreateVolumeRequest().start()
         let config = Docker.Container.Config(
             image: "rdall96/minecraft-server",
@@ -177,15 +176,15 @@ struct DockerAPITests {
 
     @Test(.disabled("Requires an image and auth credentials"))
     func pushImage() async throws {
-        let authContext = DockerAuthenticationContext(
-            username: "",
-            password: ""
-        )
-        let pushRequest = DockerPushImageRequest(
-            image: "",
-            tag: "",
-            auth: authContext
-        )
-        try await pushRequest.start()
+//        let authContext = DockerAuthenticationContext(
+//            username: "",
+//            password: ""
+//        )
+//        let pushRequest = DockerPushImageRequest(
+//            image: "",
+//            tag: "",
+//            auth: authContext
+//        )
+//        try await pushRequest.start()
     }
 }

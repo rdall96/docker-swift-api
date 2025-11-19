@@ -31,7 +31,7 @@ extension Docker {
         ///
         /// Multiple image tags can refer to the same image, and this list may be empty if no tags reference the image, in which case the image is "untagged",
         /// in which case it can still be referenced by its `id`.
-        public let tags: [String]
+        public let tags: [Tag]
 
         /// List of content-addressable digests of locally available image manifests that the image is referenced from. Multiple manifests can refer to the same image.
         ///
@@ -63,21 +63,23 @@ extension Docker {
             case labels = "Labels"
             case containers = "Containers"
         }
+
+        public init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            self.id = try container.decode(ID.self, forKey: .id)
+            self.parentID = try container.decodeIfPresent(ID.self, forKey: .parentID)
+            self.tags = try container.decode([String].self, forKey: .tags).compactMap(Tag.init(_:))
+            self.digests = try container.decode([String].self, forKey: .digests)
+            self.createdAt = try container.decode(Date.self, forKey: .createdAt)
+            self.sizeBytes = try container.decode(Int64.self, forKey: .sizeBytes)
+            self.labels = try container.decodeIfPresent(Docker.Labels.self, forKey: .labels)
+            self.containers = try container.decode(Int64.self, forKey: .containers)
+        }
     }
 }
 
 extension Docker.Image: CustomStringConvertible {
     public var description: String {
-        "[\(id)] \(tags.joined(separator: ", "))"
-    }
-}
-
-extension Docker.Image {
-    internal var namesAndTags: [(name: String, tag: String)] {
-        tags.reduce(into: []) { tags, tag in
-            let components = tag.split(separator: ":", maxSplits: 1).map(String.init)
-            guard components.count == 2 else { return }
-            tags.append((components[0], components[1]))
-        }
+        "[\(id)] \(tags.map(\.description).joined(separator: ", "))"
     }
 }

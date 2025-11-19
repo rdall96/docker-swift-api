@@ -24,9 +24,9 @@ public struct DockerPushImageRequest: DockerRequest {
 
     /// Push an image to a remote registry.
     /// If you don't specify a tag for the image, all local tags will be pushed.
-    public init(image: String, tag: String?, auth: DockerAuthenticationContext) {
-        endpoint = "/images/\(Self.sanitizeImageName(image))/push"
-        query = .init(tag: tag)
+    public init(image: Docker.Image, tag: Docker.Image.Tag?, auth: DockerAuthenticationContext) {
+        endpoint = "/images/\(image.id)/push"
+        query = .init(tag: tag?.tag)
         authContext = auth
     }
 }
@@ -36,25 +36,7 @@ extension Docker.Image {
     /// If there are multiple tags for this image, you can optionally specify which one should be pushed.
     /// If no tags are specified all local tags for this image will be pushed automatically.
     /// See the `tags` property on `Docker.Image` for a list of available tags.
-    public func push(tag: String? = nil, auth: DockerAuthenticationContext) async throws {
-        var pushRequests: [DockerPushImageRequest] = []
-        if let tag {
-            pushRequests.append(.init(image: id, tag: tag, auth: auth))
-        }
-        else {
-            pushRequests.append(contentsOf: self.namesAndTags.compactMap {
-                .init(image: $0.name, tag: $0.tag, auth: auth)
-            })
-        }
-
-        try await withThrowingTaskGroup { group in
-            pushRequests.forEach { request in
-                group.addTask {
-                    try await request.start()
-                }
-            }
-
-            try await group.waitForAll()
-        }
+    public func push(tag: Tag? = nil, auth: DockerAuthenticationContext) async throws {
+        try await DockerPushImageRequest(image: self, tag: tag, auth: auth).start()
     }
 }

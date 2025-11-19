@@ -100,13 +100,3 @@ extension DockerRequest {
         }
     }
 }
-
-internal extension DockerRequest {
-    static func sanitizeImageName(_ name: String) -> String {
-        name.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: true).map(String.init).first ?? name
-    }
-
-    static func sanitizeImageDigest(_ digest: String) -> String {
-        digest.hasPrefix("sha256:") ? digest : "sha256:\(digest)"
-    }
-}

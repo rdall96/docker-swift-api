@@ -22,19 +22,20 @@ public struct DockerTagImageRequest: DockerRequest {
     public let endpoint: String
     public let query: Query?
 
-    public init(imageID: String, newName: String, newTag: String) {
+    public init(imageID: String, newTag: Docker.Image.Tag) {
         endpoint = "/images/\(imageID)/tag"
-        query = .init(
-            repo: Self.sanitizeImageName(newName),
-            tag: newTag
-        )
+        query = .init(repo: newTag.name, tag: newTag.tag)
     }
 }
 
 extension Docker.Image {
     /// Tag image.
-    /// The tag defaults to `latest`.
-    public func tag(name: String, tag: String = "latest") async throws {
-        try await DockerTagImageRequest(imageID: self.id, newName: name, newTag: tag).start()
+    @discardableResult
+    public func tag(_ newTag: Tag) async throws -> Docker.Image {
+        try await DockerTagImageRequest(imageID: self.id, newTag: newTag).start()
+        guard let newImage = try await DockerImagesRequest.image(tag: newTag) else {
+            throw DockerError.imageNotFound
+        }
+        return newImage
     }
 }

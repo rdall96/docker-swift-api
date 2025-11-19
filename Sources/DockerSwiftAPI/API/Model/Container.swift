@@ -98,7 +98,7 @@ extension Docker {
         public let createdAt: Date
 
         /// Port-mappings for the container.
-        public let ports: [Docker.Container.PortMap]
+        public let ports: [Docker.Container.PortMap]?
 
         /// The size of files that have been created or changed by this container.
         public let sizeBytes: Int64?

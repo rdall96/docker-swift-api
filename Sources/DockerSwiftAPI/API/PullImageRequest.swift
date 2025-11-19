@@ -28,17 +28,15 @@ public struct DockerPullImageRequest: DockerRequest {
     public let query: Query?
 
     /// Pull an image by name and tag.
-    /// Tag defaults to `latest`.
-    public init(name: String, tag: String? = nil) {
-        query = .init(
-            image: Self.sanitizeImageName(name),
-            tag: tag
-        )
+    public init(_ tag: Docker.Image.Tag) {
+        query = .init(image: tag.name, tag: tag.tag)
     }
 
     /// Pull an image by name and digest (id).
-    public init(name: String, digest: String) {
-        let image = Self.sanitizeImageName(name) + "@" + Self.sanitizeImageDigest(digest)
-        query = .init(image: image, tag: nil)
+    public init(imageName: String, digest: String) {
+        query = .init(
+            image: Docker.Image.Tag.sanitizeImageName(imageName) + "@" + Docker.Image.Tag.sanitizeImageDigest(digest),
+            tag: nil
+        )
     }
 }

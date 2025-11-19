@@ -27,7 +27,11 @@ public struct DockerImagesRequest: DockerRequest {
 
     /// List all images with the given name.
     public static func images(withName name: String) async throws -> [Docker.Image] {
-        try await all.filter { $0.tags.joined().contains(name) }
+        try await all.filter { image in
+            image.tags.contains { tag in
+                tag.name == name
+            }
+        }
     }
 
     /// Returns details about an image with the given ID, if it exists.
@@ -36,7 +40,7 @@ public struct DockerImagesRequest: DockerRequest {
     }
 
     /// Returns details an image with the given name and tag, if it exists.
-    public static func image(withName name: String, tag: String = "latest") async throws -> Docker.Image? {
-        try await all.first { $0.tags.contains("\(name):\(tag)") }
+    public static func image(tag: Docker.Image.Tag) async throws -> Docker.Image? {
+        try await all.first { $0.tags.contains(tag) }
     }
 }

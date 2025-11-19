@@ -36,27 +36,24 @@ public struct DockerBuildRequest: DockerRequest {
     public let body: Data?
     public let contentType: ContentType = .tar
 
-    private let imageName: String
-    private let imageTag: String
+    private let tag: Docker.Image.Tag
 
     public init(
         at url: URL,
         ignoreFiles: [String] = [],
-        name: String,
-        tag: String = "latest",
+        tag: Docker.Image.Tag,
         dockerFilePath: String = "Dockerfile",
         buildArgs: Docker.BuildArgs? = nil,
         labels: Docker.Labels? = nil,
         useCache: Bool = true,
         useBuildKit: Bool = false
     ) throws {
-        imageName = Self.sanitizeImageName(name)
-        imageTag = tag
+        self.tag = tag
 
         // Create the build query
         query = .init(
             dockerFile: dockerFilePath,
-            tag: "\(imageName):\(tag)",
+            tag: tag.description,
             noCache: !useCache,
             buildArgs: buildArgs?.args,
             labels: labels?.labels,
@@ -81,7 +78,7 @@ public struct DockerBuildRequest: DockerRequest {
         try await run(timeout: timeout)
 
         // Find the newly built image and return it
-        guard let image = try await DockerImagesRequest.image(withName: imageName, tag: imageTag) else {
+        guard let image = try await DockerImagesRequest.image(tag: tag) else {
             logger.critical("No image found after completing build")
             throw DockerError.imageNotFound
         }
