@@ -96,7 +96,7 @@ internal final class DockerSocket: Sendable {
         case .ok, .created, .accepted, .noContent:
             return response
         case .badRequest, .unauthorized, .forbidden, .notFound, .methodNotAllowed, .payloadTooLarge, .unsupportedMediaType:
-            throw DockerSocketError.requestFailed(reason: response.status.description)
+            throw DockerSocketError.requestFailed(reason: response.description)
         case .internalServerError, .notImplemented, .badGateway, .serviceUnavailable, .gatewayTimeout:
             throw DockerSocketError.serverError(reason: response.status.description)
         default:
@@ -123,5 +123,16 @@ fileprivate extension HTTPClient {
         let request = try Request(url: url, method: method, headers: headers, body: body)
         logger.debug("[\(method.rawValue)] \(url.absoluteString)")
         return try await execute(request: request, deadline: deadline, logger: logger).get()
+    }
+}
+
+fileprivate extension HTTPClient.Response {
+    var description: String {
+        if let body {
+            return "\(status.description). \(String(buffer: body))"
+        }
+        else {
+            return status.description
+        }
     }
 }
