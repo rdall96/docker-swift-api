@@ -31,7 +31,7 @@ public final class DockerClient {
     ) {
         self.connection = connection
         self.timeout = timeout
-        self.logger = logger ?? Logger(label: connection.description)
+        self.logger = logger ?? Logger(label: "docker-\(connection.description)")
     }
 
     private var runner: DockerRunner {
