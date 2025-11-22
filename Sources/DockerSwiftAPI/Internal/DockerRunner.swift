@@ -51,6 +51,14 @@ extension DockerRunner {
         let requestPath: String
         do {
             requestPath = try request.path
+                // FIXME: Ensure any encoded dictionaries respect the JSON format (not the Swift one)
+                // This is a bit hacky and I am sure it will break something eventually.
+                // It appears that the implementation of JSONEncoder is different on Linux than it is on Apple platforms,
+                // so I need to find a universal way to properly encode dictionaries into the query path.
+                .replacingOccurrences(of: "=[\"", with: "={\"")
+                .replacingOccurrences(of: "\"]", with: "\"}")
+                .replacingOccurrences(of: "\": \"", with: "\":\"")
+                .replacingOccurrences(of: "\", \"", with: "\",\"")
         }
         catch {
             logger.error("Failed to encode request path: \(error)")
