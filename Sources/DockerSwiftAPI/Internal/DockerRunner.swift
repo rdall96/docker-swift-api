@@ -105,7 +105,7 @@ extension DockerRunner {
         // Run the request
         let response: HTTPClient.Response
         do {
-            logger.info("[\(request.method.rawValue)] \(requestPath)")
+            logger.debug("[\(request.method.rawValue)] \(requestPath)")
             response = try await self.response(
                 for: requestPath,
                 method: request.method.httpMethod,
