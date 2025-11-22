@@ -21,4 +21,17 @@ public struct DockerHost: Sendable {
 
     /// Path on disk to the trust root certificate to use for communicating with the Docker server.
     public let trustRootCertificatePEM: URL
+
+    public init(
+        url: URL,
+        clientKeyPEM: URL,
+        clientCertificatePEM: URL,
+        trustRootCertificatePEM: URL
+    ) {
+        // TODO: Add validation to the paths
+        self.url = url
+        self.clientKeyPEM = clientKeyPEM
+        self.clientCertificatePEM = clientCertificatePEM
+        self.trustRootCertificatePEM = trustRootCertificatePEM
+    }
 }
