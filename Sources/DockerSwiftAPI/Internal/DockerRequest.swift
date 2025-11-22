@@ -6,29 +6,26 @@
 //
 
 import Foundation
-import Logging
+import NIOHTTP1
 
 // Expose the request methods as its own type so consumers of the library don't have to import SwiftNIO
-public enum DockerRequestMethod: String {
+internal enum DockerRequestMethod: String {
     case GET
     case POST
     case DELETE
 }
 
-public enum DockerRequestContentType: String {
+internal enum DockerRequestContentType: String {
     case json = "application/json"
     case tar = "application/x-tar"
 }
 
-public protocol DockerRequest {
+internal protocol DockerRequest {
     typealias Method = DockerRequestMethod
     associatedtype Query: Encodable
     associatedtype Body
     typealias ContentType = DockerRequestContentType
     associatedtype Response
-
-    /// The docker API this request is built for
-    var api: Docker.API { get }
 
     /// The request method
     var method: Method { get }
@@ -48,20 +45,16 @@ public protocol DockerRequest {
 
     /// Authentication context for the request.
     var authContext: DockerAuthenticationContext? { get }
-
-    var logger: Logger { get }
 }
 
 // MARK: - Defaults
 
-public extension DockerRequest {
-    var api: Docker.API { .latest }
+extension DockerRequest {
     var method: Method { .GET }
     var query: Query? { nil }
     var body: Body? { nil }
     var contentType: ContentType { .json }
     var authContext: DockerAuthenticationContext? { nil }
-    var logger: Logger { Logger(label: "\(type(of: self))") }
 }
 
 // MARK: - Helpers
@@ -87,7 +80,7 @@ extension DockerRequest {
     }
 
     /// Build the endpoint for the request.
-    internal var path: String {
+    var path: String {
         get throws {
             // If there is no query, the path is just the endpoint
             guard let queryDictionary = try queryDictionary, !queryDictionary.isEmpty else {
@@ -97,6 +90,16 @@ extension DockerRequest {
             return endpoint.trimmingCharacters(in: .init(charactersIn: "/")) + "?" + queryDictionary
                 .reduce(into: []) { $0.append("\($1.key)=\($1.value)") }
                 .joined(separator: "&")
+        }
+    }
+}
+
+extension DockerRequestMethod {
+    var httpMethod: HTTPMethod {
+        switch self {
+        case .GET: .GET
+        case .POST: .POST
+        case .DELETE: .DELETE
         }
     }
 }

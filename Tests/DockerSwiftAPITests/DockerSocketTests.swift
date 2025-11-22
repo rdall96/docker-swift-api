@@ -9,19 +9,16 @@ import Testing
 import Foundation
 import NIOHTTP1
 import AsyncHTTPClient
+import Logging
 
 @testable import DockerSwiftAPI
 
-final class DockerSocketTests {
+struct DockerSocketTests {
 
-    private let socket: DockerSocket
+    private let socket: DockerSocketRunner
 
     init() {
-        socket = DockerSocket("/var/run/docker.sock", hostname: "v1.51")
-    }
-
-    deinit {
-        socket.shutdown()
+        socket = DockerSocketRunner("/var/run/docker.sock", logger: Logger(label: "DockerSocketTests"))
     }
 
     private func encode<T: Encodable>(_ value: T) throws -> HTTPClient.Body {
@@ -32,7 +29,13 @@ final class DockerSocketTests {
 
     @Test
     func version() async throws {
-        let response = try await socket.run("version")
+        let response = try await socket.response(
+            for: "version",
+            method: .GET,
+            body: nil,
+            headers: [:],
+            timeout: nil
+        )
         #expect(response.status == .ok)
         let result = String(buffer: try #require(response.body))
         #expect(result.isEmpty == false)
@@ -40,7 +43,13 @@ final class DockerSocketTests {
 
     @Test
     func startContainer() async throws {
-        let pullResponse = try await socket.run("images/create?fromImage=hello-world", method: .POST)
-        #expect(pullResponse.status == .ok)
+        let response = try await socket.response(
+            for: "images/create?fromImage=hello-world",
+            method: .POST,
+            body: nil,
+            headers: [:],
+            timeout: nil
+        )
+        #expect(response.status == .ok)
     }
 }

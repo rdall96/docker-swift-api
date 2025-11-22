@@ -51,3 +51,14 @@
 - `Docker.Image` now conforms to `CustomStringConvertible`.
 - New API to remove Docker volumes.
 - `DockerHub.Image.architecture` now uses the `Docker.Platform.Architecture` data model.
+
+## [2.0.0](https://gitlab.com/rdall96/docker-swift-api/-/releases/2.0.0) (11/22/2025)
+
+**Changed**
+- Removed Docker APIs.
+- Added SwiftNIO dependency.
+- Now communicates with the Docker daemon using the [Docker Engine API](https://docs.docker.com/reference/api/engine/).
+- You can establish a connection with either a Docker socket, or a Docker server.
+- Created new DockerClient API to interact with a Docker connection.
+- Added supporting APIs to represent various Docker objects (i.e.: containers, images, volumes, etc...).
+- Updated DockerHubAPI to use native network requests over curl.

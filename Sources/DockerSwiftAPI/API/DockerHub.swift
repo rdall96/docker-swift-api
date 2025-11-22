@@ -46,7 +46,7 @@ fileprivate struct DockerHubRequest {
         let response = try await client.execute(.GET, url: url.absoluteString).get()
         guard response.status == .ok, let data = response.body else {
             try? await client.shutdown()
-            throw DockerError.requestFailed(response.status.description)
+            throw DockerError.invalidRequest
         }
         let decoded = try JSONDecoder().decode(T.self, from: data)
         try? await client.shutdown()

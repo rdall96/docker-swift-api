@@ -9,22 +9,22 @@ import Foundation
 
 /// Push a local image to a remote registry.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Image/operation/ImagePush
-public struct DockerPushImageRequest: DockerRequest {
-    public typealias Body = Never
-    public typealias Response = Void
+internal struct DockerPushImageRequest: DockerRequest {
+    typealias Body = Never
+    typealias Response = Void
 
-    public struct Query: Encodable {
+    struct Query: Encodable {
         let tag: String?
     }
 
-    public let method: DockerRequest.Method = .POST
-    public let endpoint: String
-    public let query: Query?
-    public let authContext: DockerAuthenticationContext?
+    let method: DockerRequest.Method = .POST
+    let endpoint: String
+    let query: Query?
+    let authContext: DockerAuthenticationContext?
 
     /// Push an image to a remote registry.
     /// If you don't specify a tag for the image, all local tags will be pushed.
-    public init(image: Docker.Image, tag: Docker.Image.Tag?, auth: DockerAuthenticationContext) throws {
+    init(image: Docker.Image, tag: Docker.Image.Tag?, auth: DockerAuthenticationContext) throws {
         // ensure the image has at least one valid tag
         if image.tags.isEmpty {
             throw DockerError.invalidTag
@@ -42,15 +42,5 @@ public struct DockerPushImageRequest: DockerRequest {
         endpoint = "/images/\(imageName)/push"
         query = .init(tag: tag?.tag)
         authContext = auth
-    }
-}
-
-extension Docker.Image {
-    /// Push this image to a remote registry.
-    /// If there are multiple tags for this image, you can optionally specify which one should be pushed.
-    /// If no tags are specified all local tags for this image will be pushed automatically.
-    /// See the `tags` property on `Docker.Image` for a list of available tags.
-    public func push(tag: Tag? = nil, auth: DockerAuthenticationContext) async throws {
-        try await DockerPushImageRequest(image: self, tag: tag, auth: auth).start()
     }
 }
