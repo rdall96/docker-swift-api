@@ -59,8 +59,13 @@ internal final class DockerServerRunner: DockerRunner {
         }
 
         // Build a request
+        let requestURL = host.url.appendingPathComponent(path)
+        guard let requestURLString = requestURL.absoluteString.removingPercentEncoding else {
+            logger.critical("Failed to encode request URL \(requestURL)")
+            throw DockerError.unknown
+        }
         let request = try HTTPClient.Request(
-            url: host.url.appendingPathComponent(path).absoluteString,
+            url: requestURLString,
             method: method,
             headers: headers,
             body: body,
