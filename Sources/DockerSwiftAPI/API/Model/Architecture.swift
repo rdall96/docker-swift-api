@@ -9,7 +9,7 @@ import Foundation
 
 extension Docker {
     /// The architecture that the daemon is running on.
-    public struct Architecture: RawRepresentable, Equatable, Hashable, Decodable {
+    public struct Architecture: RawRepresentable, Equatable, Hashable, Decodable, Sendable {
         public var rawValue: String
         
         public init(rawValue: String) {

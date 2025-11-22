@@ -10,7 +10,7 @@ import Foundation
 extension Docker {
     /// The operating system that the daemon is running on.
     /// i.e.: `linux` or `windows`.
-    public struct OS: RawRepresentable, Codable {
+    public struct OS: RawRepresentable, Codable, Sendable {
         public let rawValue: String
 
         public init(rawValue: String) {

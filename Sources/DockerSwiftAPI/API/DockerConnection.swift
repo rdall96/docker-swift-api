@@ -7,7 +7,7 @@
 
 import Foundation
 
-public enum DockerConnection {
+public enum DockerConnection: Sendable {
     /// Connect to a Docker socket.
     /// i.e.: `/var/run/docker.sock`
     case socket(String)

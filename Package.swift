@@ -1,4 +1,4 @@
-// swift-tools-version: 5.10
+// swift-tools-version: 6.2.1
 
 import PackageDescription
 
@@ -14,8 +14,8 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-nio.git", .upToNextMinor(from: "2.86.2")),
-        .package(url: "https://github.com/swift-server/async-http-client.git", .upToNextMinor(from: "1.29.1")),
+        .package(url: "https://github.com/apple/swift-nio.git", .upToNextMinor(from: "2.90.0")),
+        .package(url: "https://github.com/swift-server/async-http-client.git", .upToNextMinor(from: "1.30.0")),
     ],
     targets: [
         .target(

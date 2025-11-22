@@ -8,7 +8,7 @@
 import Foundation
 
 /// Authentication information for a Docker registry.
-public struct DockerAuthenticationContext: Encodable {
+public struct DockerAuthenticationContext: Encodable, Sendable {
 
     let username: String
     let password: String

@@ -11,7 +11,7 @@ extension Docker.Container {
 
     /// The behavior to apply when the container exits. The default is not to restart.
     /// An ever increasing delay (double the previous delay, starting at 100ms) is added before each restart to prevent flooding the server.
-    public enum RestartPolicy {
+    public enum RestartPolicy: Sendable {
         case never
         case always
         case unlessStopped
