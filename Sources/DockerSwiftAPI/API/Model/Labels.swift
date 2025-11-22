@@ -9,7 +9,7 @@ import Foundation
 
 extension Docker {
     /// User-defined key/value metadata.
-    public struct Labels: Equatable, Hashable {
+    public struct Labels: Equatable, Hashable, Sendable {
         internal var labels: [String : String]
 
         public init(_ labels: [String : String] = [:]) {

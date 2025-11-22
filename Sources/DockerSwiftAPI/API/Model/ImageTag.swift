@@ -9,7 +9,7 @@ import Foundation
 
 extension Docker.Image {
     /// A tag for a Docker image.
-    public struct Tag: Hashable {
+    public struct Tag: Hashable, Sendable {
 
         /// The name of the image.
         public let name: String

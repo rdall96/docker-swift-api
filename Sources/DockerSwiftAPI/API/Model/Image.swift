@@ -10,7 +10,7 @@ import Foundation
 extension Docker {
 
     /// A Docker image.
-    public struct Image: Equatable, Hashable, Identifiable, Decodable {
+    public struct Image: Equatable, Hashable, Identifiable, Decodable, Sendable {
         public typealias ID = String
 
         /// ID is the content-addressable ID of an image.

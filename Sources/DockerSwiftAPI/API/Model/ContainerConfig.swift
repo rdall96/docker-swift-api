@@ -8,7 +8,7 @@
 import Foundation
 
 extension Docker.Container {
-    public struct Config: Encodable {
+    public struct Config: Encodable, Sendable {
 
         /// The name (or ID) of the image to use when creating the container, or which was used when the container was created.
         public let image: String

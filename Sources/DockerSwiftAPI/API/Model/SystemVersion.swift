@@ -8,9 +8,9 @@
 import Foundation
 
 extension Docker {
-    public struct SystemVersion: Decodable {
+    public struct SystemVersion: Decodable, Sendable {
 
-        public struct Platform: Decodable {
+        public struct Platform: Decodable, Sendable {
             public let name: String
 
             private enum CodingKeys: String, CodingKey {
@@ -18,7 +18,7 @@ extension Docker {
             }
         }
 
-        public struct Component: Decodable {
+        public struct Component: Decodable, Sendable {
             public let name: String
             public let version: Docker.Version
 

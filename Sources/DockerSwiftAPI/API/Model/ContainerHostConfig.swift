@@ -9,10 +9,10 @@ import Foundation
 
 extension Docker.Container {
     /// Container configuration that depends on the host we are running on.
-    public struct HostConfig: Encodable {
+    public struct HostConfig: Encodable, Sendable {
 
         /// Mapping a local directory or Docker volume to a path inside the container.
-        public struct VolumeMapping: RawRepresentable, Codable {
+        public struct VolumeMapping: RawRepresentable, Codable, Sendable {
             public let rawValue: String
 
             public init(rawValue: String) {
@@ -33,7 +33,7 @@ extension Docker.Container {
         }
 
         /// Host port that is mapped to a container.
-        public struct HostPortInfo: Codable {
+        public struct HostPortInfo: Codable, Sendable {
             let hostPort: String
 
             internal init(with map: Docker.Container.PortMap) {
@@ -48,7 +48,7 @@ extension Docker.Container {
         /// Mapping of ports between the host and the container.
         public typealias PortMappings = [String : [HostPortInfo]]
 
-        private struct RestartPolicyConfig: RawRepresentable, Codable {
+        private struct RestartPolicyConfig: RawRepresentable, Codable, Sendable {
             let rawValue: Docker.Container.RestartPolicy
 
             init(rawValue: Docker.Container.RestartPolicy) {

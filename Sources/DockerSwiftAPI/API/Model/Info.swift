@@ -10,7 +10,7 @@ import Foundation
 extension Docker {
     // unused
     /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/System/operation/SystemInfo
-    internal struct Info: Decodable {
+    internal struct Info: Decodable, Sendable {
         let id: UUID
         let containers: UInt
         let runningContainers: UInt

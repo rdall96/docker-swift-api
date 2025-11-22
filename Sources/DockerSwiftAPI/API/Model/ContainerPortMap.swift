@@ -9,9 +9,9 @@ import Foundation
 
 extension Docker.Container {
     /// Port-mappings for the container.
-    public struct PortMap: Equatable, Hashable, Decodable {
+    public struct PortMap: Equatable, Hashable, Decodable, Sendable {
 
-        public enum PortType: String, Decodable {
+        public enum PortType: String, Decodable, Sendable {
             case tcp
             case udp
             case sctp

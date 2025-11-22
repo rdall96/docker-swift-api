@@ -8,11 +8,11 @@
 import Foundation
 
 extension Docker {
-    public struct Container: Equatable, Hashable, Identifiable, Decodable {
+    public struct Container: Equatable, Hashable, Identifiable, Decodable, Sendable {
         public typealias ID = String
 
         /// The state of a container.
-        public enum State: String, Decodable {
+        public enum State: String, Decodable, Sendable {
             case created
             case running
             case paused
@@ -23,10 +23,10 @@ extension Docker {
         }
 
         /// A mount used by a container.
-        public struct Mount: Equatable, Hashable, Decodable {
+        public struct Mount: Equatable, Hashable, Decodable, Sendable {
 
             /// The mount type.
-            public enum MountType: String, Decodable {
+            public enum MountType: String, Decodable, Sendable {
                 /// A mount of a file or directory from the host into the container.
                 case bind
                 /// A docker volume with the given Name.

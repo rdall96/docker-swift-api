@@ -9,7 +9,7 @@ import Foundation
 
 extension Docker.Container {
     /// A process running in the container.
-    public struct Process: Identifiable, Hashable {
+    public struct Process: Identifiable, Hashable, Sendable {
         public typealias ID = UInt
 
         public let user: String

@@ -9,7 +9,7 @@ import Foundation
 
 extension Docker {
     /// Describes the platform which the image in the manifest runs on, as defined in the [OCI Image Index Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/image-index.md).
-    public struct Platform: Equatable, Hashable, Decodable {
+    public struct Platform: Equatable, Hashable, Decodable, Sendable {
 
         /// The CPU architecture, for example `amd64` or `x86`.
         public let architecture: Docker.Architecture

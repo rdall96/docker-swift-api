@@ -9,7 +9,7 @@ import Foundation
 
 extension Docker {
     /// A descriptor struct containing digest, media type, and size, as defined in the [OCI Content Descriptors Specification](https://github.com/opencontainers/image-spec/blob/v1.0.1/image-index.md).
-    public struct Descriptor: Equatable, Hashable, Decodable {
+    public struct Descriptor: Equatable, Hashable, Decodable, Sendable {
 
         /// The digest of the targeted content.
         public let digest: String

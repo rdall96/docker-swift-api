@@ -8,15 +8,15 @@
 import Foundation
 
 extension Docker {
-    public struct Volume: Equatable, Hashable, Identifiable, Decodable {
+    public struct Volume: Equatable, Hashable, Identifiable, Decodable, Sendable {
         public typealias ID = String
 
-        public enum Scope: String, Decodable {
+        public enum Scope: String, Decodable, Sendable {
             case local
             case global
         }
 
-        public struct Options: Equatable, Hashable, Codable {
+        public struct Options: Equatable, Hashable, Codable, Sendable {
             public let device: String
             public let o: String
             public let type: String

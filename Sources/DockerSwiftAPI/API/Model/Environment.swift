@@ -8,7 +8,7 @@
 import Foundation
 
 extension Docker {
-    public struct EnvironmentVariable: CustomStringConvertible {
+    public struct EnvironmentVariable: CustomStringConvertible, Sendable {
         public let key: String
         public let value: String
 
