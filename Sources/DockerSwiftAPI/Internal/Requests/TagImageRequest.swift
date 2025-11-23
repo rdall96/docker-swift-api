@@ -9,7 +9,7 @@ import Foundation
 
 /// Tag a local Docker image.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Image/operation/ImageTag
-internal struct DockerTagImageRequest: DockerRequest {
+internal struct TagImageRequest: DockerRequest {
     typealias Body = Never
     typealias Response = Void
 

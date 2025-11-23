@@ -9,7 +9,7 @@ import Foundation
 
 /// Remove a Docker volume.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Volume/operation/VolumeDelete
-internal struct DockerRemoveVolumeRequest: DockerRequest {
+internal struct RemoveVolumeRequest: DockerRequest {
     typealias Body = Never
     typealias Response = Void
 

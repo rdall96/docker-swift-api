@@ -9,7 +9,7 @@ import Foundation
 
 /// Push a local image to a remote registry.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Image/operation/ImagePush
-internal struct DockerPushImageRequest: DockerRequest {
+internal struct PushImageRequest: DockerRequest {
     typealias Body = Never
     typealias Response = Void
 

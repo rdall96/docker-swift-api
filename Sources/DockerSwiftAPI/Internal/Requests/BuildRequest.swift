@@ -9,7 +9,7 @@ import Foundation
 
 /// Build an image.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Image/operation/ImageBuild
-internal struct DockerBuildRequest: DockerRequest {
+internal struct BuildImageRequest: DockerRequest {
     typealias Response = Void
 
     struct Query: Encodable {

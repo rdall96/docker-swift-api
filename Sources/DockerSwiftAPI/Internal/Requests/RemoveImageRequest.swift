@@ -9,7 +9,7 @@ import Foundation
 
 /// Remove a local Docker image.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Image/operation/ImageDelete
-internal struct DockerRemoveImageRequest: DockerRequest {
+internal struct RemoveImageRequest: DockerRequest {
     typealias Body = Never
     typealias Response = Void
 

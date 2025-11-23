@@ -25,28 +25,10 @@ internal protocol DockerRunner: Sendable {
 
 extension DockerRunner {
 
-    func run<Request: DockerRequest>(_ request: Request, timeout: Int64?) async throws -> Request.Response where Request.Response == Void {
-        let _: HTTPClient.Response = try await run(request, timeout: timeout)
-        return
-    }
-
-    func run<Request: DockerRequest>(_ request: Request, timeout: Int64?) async throws -> Request.Response where Request.Response : Decodable {
-        let result: HTTPClient.Response = try await run(request, timeout: timeout)
-        guard let response = result.body else {
-            throw DockerError.missingResponseBody
-        }
-
-        // Decode the response body
-        do {
-            return try JSONDecoder().decode(Request.Response.self, from: response)
-        }
-        catch {
-            throw DockerError.failedToDecodeResponse(error)
-        }
-    }
-
     @discardableResult
-    private func run<Request: DockerRequest>(_ request: Request, timeout: Int64?) async throws -> HTTPClient.Response {
+    func run<Request: DockerRequest>(_ request: Request, timeout: Int64?) async throws -> HTTPClient.Response {
+        logger.debug("Starting \(type(of: request))")
+
         // Build the path
         let requestPath: String
         do {

@@ -9,7 +9,7 @@ import Foundation
 
 /// Pull a Docker image.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Image/operation/ImageCreate
-internal struct DockerPullImageRequest: DockerRequest {
+internal struct PullImageRequest: DockerRequest {
     typealias Body = Never
     typealias Response = Void
 

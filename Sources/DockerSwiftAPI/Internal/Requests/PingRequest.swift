@@ -8,7 +8,7 @@
 import Foundation
 
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/System/operation/SystemPing
-internal struct DockerPingRequest: DockerRequest {
+internal struct PingRequest: DockerRequest {
     typealias Query = Never
     typealias Body = Never
     typealias Response = Void

@@ -9,7 +9,7 @@ import Foundation
 
 /// Create a new volume.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Volume/operation/VolumeCreate
-internal struct DockerCreateVolumeRequest: DockerRequest {
+internal struct CreateVolumeRequest: DockerRequest {
     typealias Query = Never
     typealias Response = Docker.Volume
 

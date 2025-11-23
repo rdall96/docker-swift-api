@@ -9,7 +9,7 @@ import Foundation
 
 /// Remove a Docker container.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Container/operation/ContainerDelete
-internal struct DockerRemoveContainerRequest: DockerRequest {
+internal struct RemoveContainerRequest: DockerRequest {
     typealias Body = Never
     typealias Response = Void
 

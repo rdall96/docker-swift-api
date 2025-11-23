@@ -9,7 +9,7 @@ import Foundation
 
 /// Get info about a Docker volume.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Volume/operation/VolumeInspect
-internal struct DockerInspectVolumeRequest: DockerRequest {
+internal struct InspectVolumeRequest: DockerRequest {
     typealias Query = Never
     typealias Body = Never
     typealias Response = Docker.Volume

@@ -9,19 +9,11 @@ import Foundation
 
 /// Create a new container.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Container/operation/ContainerCreate
-internal struct DockerCreateContainerRequest: DockerRequest {
+internal struct CreateContainerRequest: DockerRequest {
     typealias Config = Docker.Container.Config
 
     struct Metadata: Encodable {
         let name: String?
-    }
-
-    struct Response: Decodable {
-        let id: Docker.Container.ID
-
-        private enum CodingKeys: String, CodingKey {
-            case id = "Id"
-        }
     }
 
     let method: DockerRequest.Method = .POST
@@ -29,8 +21,11 @@ internal struct DockerCreateContainerRequest: DockerRequest {
     let query: Metadata?
     let body: Config?
 
-    init(metadata: Metadata?, config: Config?) {
-        self.query = metadata
-        self.body = config
+    struct Response: Decodable {
+        let id: Docker.Container.ID
+
+        private enum CodingKeys: String, CodingKey {
+            case id = "Id"
+        }
     }
 }
