@@ -9,7 +9,7 @@ variables:
 # run a test build
 test_build:
   stage: test
-  image: swift:5.10-jammy
+  image: swift:6.2.1-noble
   script:
     - swift package resolve
     - swift build -c release --static-swift-stdlib
