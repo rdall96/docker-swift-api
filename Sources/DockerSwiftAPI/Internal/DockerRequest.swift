@@ -21,14 +21,13 @@ internal enum DockerRequestContentType: String {
 }
 
 internal protocol DockerRequest {
-    typealias Method = DockerRequestMethod
     associatedtype Query: Encodable
     associatedtype Body
     typealias ContentType = DockerRequestContentType
     associatedtype Response
 
     /// The request method
-    var method: Method { get }
+    var method: DockerRequestMethod { get }
 
     /// The endpoint for this request.
     /// i.e.: `/version` or `/images/json`.
@@ -50,7 +49,7 @@ internal protocol DockerRequest {
 // MARK: - Defaults
 
 extension DockerRequest {
-    var method: Method { .GET }
+    var method: DockerRequestMethod { .GET }
     var query: Query? { nil }
     var body: Body? { nil }
     var contentType: ContentType { .json }

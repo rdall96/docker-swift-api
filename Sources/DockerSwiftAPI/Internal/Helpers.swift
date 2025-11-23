@@ -15,3 +15,9 @@ internal enum Helpers {
         return formatter.date(from: string)
     }
 }
+
+internal extension Date {
+    var unixTimestamp: UInt64 {
+        UInt64(timeIntervalSince1970)
+    }
+}

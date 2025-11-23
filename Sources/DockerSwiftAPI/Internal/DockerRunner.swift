@@ -115,6 +115,9 @@ extension DockerRunner {
         case .ok, .created, .accepted, .noContent:
             logger.debug("Successful response: \(response.status.code)")
             return response
+        case .notModified:
+            logger.warning("Ignored request: \(response.description)")
+            throw DockerError.ignoredRequest
         case .badRequest, .forbidden, .notFound, .methodNotAllowed, .payloadTooLarge, .unsupportedMediaType:
             logger.error("Request failed! \(response.description)")
             throw DockerError.invalidRequest

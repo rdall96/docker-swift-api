@@ -17,7 +17,7 @@ internal struct PushImageRequest: DockerRequest {
         let tag: String?
     }
 
-    let method: DockerRequest.Method = .POST
+    let method: DockerRequestMethod = .POST
     let endpoint: String
     let query: Query?
     let authContext: DockerAuthenticationContext?

@@ -30,7 +30,7 @@ internal struct BuildImageRequest: DockerRequest {
         }
     }
 
-    let method: DockerRequest.Method = .POST
+    let method: DockerRequestMethod = .POST
     let endpoint: String = "/build"
     let query: Query?
     let body: Data?

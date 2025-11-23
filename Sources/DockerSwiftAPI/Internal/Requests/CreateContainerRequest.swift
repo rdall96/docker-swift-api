@@ -16,7 +16,7 @@ internal struct CreateContainerRequest: DockerRequest {
         let name: String?
     }
 
-    let method: DockerRequest.Method = .POST
+    let method: DockerRequestMethod = .POST
     let endpoint: String = "/containers/create"
     let query: Metadata?
     let body: Config?

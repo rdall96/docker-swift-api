@@ -23,7 +23,7 @@ internal struct RemoveImageRequest: DockerRequest {
         }
     }
 
-    let method: DockerRequest.Method = .DELETE
+    let method: DockerRequestMethod = .DELETE
     let endpoint: String
     let query: Query?
 

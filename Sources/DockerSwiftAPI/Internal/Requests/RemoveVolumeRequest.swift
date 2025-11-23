@@ -17,7 +17,7 @@ internal struct RemoveVolumeRequest: DockerRequest {
         let force: Bool
     }
 
-    let method: DockerRequest.Method = .DELETE
+    let method: DockerRequestMethod = .DELETE
     let endpoint: String
     let query: Query?
 

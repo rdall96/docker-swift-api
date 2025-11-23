@@ -34,6 +34,27 @@ extension DockerClient {
         }
     }
 
+    /// Get stdout and stderr logs from a container.
+    /// - NOTE: This endpoint works only for containers with the `json-file` or `journald` logging driver.
+    public func logs(
+        for container: Docker.Container,
+        since: Date? = nil,
+        until: Date? = nil,
+        addTimestamps: Bool = false,
+        tail: UInt? = nil
+    ) async throws {
+        let request = ContainerLogsRequest(
+            containerID: container.id,
+            query: .init(
+                since: since?.unixTimestamp,
+                until: until?.unixTimestamp,
+                timestamps: addTimestamps,
+                tail: tail?.formatted()
+            )
+        )
+        return try await run(request)
+    }
+
     // MARK: - Create
 
     /// Create a new container with the given configuration.
@@ -60,6 +81,12 @@ extension DockerClient {
         return container
     }
 
+    /// Rename a container.
+    public func renameContainer(_ container: Docker.Container, name: String) async throws {
+        let request = RenameContainerRequest(containerID: container.id, name: name)
+        try await run(request)
+    }
+
     // MARK: - Remove
 
     /// Remove a container.
@@ -74,5 +101,76 @@ extension DockerClient {
             force: force
         )
         try await run(request)
+    }
+
+    // MARK: - Start/Stop/Restart/Kill
+
+    /// Start a container.
+    public func start(_ container: Docker.Container) async throws {
+        let request = StartContainerRequest(containerID: container.id)
+        do {
+            try await run(request)
+        }
+        catch DockerError.ignoredRequest {
+            // do nothing
+        }
+    }
+
+    /// Stop a container.
+    /// Optionally specify the stop signal to send to the container (i.e.: `SIGINT`) and how long to wait (in seconds) before the container is killed.
+    public func stop(
+        _ container: Docker.Container,
+        signal: String? = nil,
+        killAfter timeout: Int? = nil
+    ) async throws {
+        let request = StopContainerRequest(
+            containerID: container.id,
+            query: .init(signal: signal, timeout: timeout)
+        )
+        do {
+            try await run(request)
+        }
+        catch DockerError.ignoredRequest {
+            // do nothing
+        }
+    }
+
+    /// Restart a container.
+    /// Optionally specify the stop signal to send to the container (i.e.: `SIGINT`) and how long to wait (in seconds) before the container is killed.
+    public func restart(
+        _ container: Docker.Container,
+        signal: String? = nil,
+        killAfter timeout: Int? = nil
+    ) async throws {
+        let request = RestartContainerRequest(
+            containerID: container.id,
+            query: .init(signal: signal, timeout: timeout)
+        )
+        try await run(request)
+    }
+
+    /// Pause a container.
+    public func pause(_ container: Docker.Container) async throws {
+        let request = PauseContainerRequest(containerID: container.id)
+        try await run(request)
+    }
+
+    /// Resume a container (unpause).
+    public func resume(_ container: Docker.Container) async throws {
+        let request = UnpauseContainerRequest(containerID: container.id)
+        try await run(request)
+    }
+
+    /// Force stop (kill) a container.
+    /// You can specify which signal to send when stopping the container (default: `SIGKILL`).
+    public func kill(_ container: Docker.Container, signal: String = "SIGKILL") async throws {
+        let request = KillContainerRequest(containerID: container.id, signal: signal)
+        try await run(request)
+    }
+
+    /// Wait for a container to exist and return the exit code.
+    public func wait(for container: Docker.Container) async throws -> Int64 {
+        let request = ContainerWaitRequest(containerID: container.id)
+        return try await run(request).statusCode
     }
 }

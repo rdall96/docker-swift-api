@@ -23,7 +23,7 @@ internal struct PullImageRequest: DockerRequest {
         }
     }
 
-    let method: DockerRequest.Method = .POST
+    let method: DockerRequestMethod = .POST
     let endpoint: String = "/images/create"
     let query: Query?
 }

@@ -7,16 +7,22 @@
 
 import Foundation
 
-/// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Container/operation/ContainerStart
-internal struct StartContainerRequest: DockerRequest {
-    typealias Query = Never
+/// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Container/operation/ContainerStop
+internal struct StopContainerRequest: DockerRequest {
     typealias Body = Never
     typealias Response = Void
 
+    struct Query: Encodable {
+        let signal: String?
+        let timeout: Int?
+    }
+
     let method: DockerRequestMethod = .POST
     let endpoint: String
+    let query: Query?
 
-    init(containerID: Docker.Container.ID) {
-        endpoint = "/containers/\(containerID)/start"
+    init(containerID: Docker.Container.ID, query: Query?) {
+        endpoint = "/containers/\(containerID)/stop"
+        self.query = query
     }
 }

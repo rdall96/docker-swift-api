@@ -10,6 +10,7 @@ import Foundation
 public enum DockerError: Error {
     case unknown
 
+    case ignoredRequest
     case invalidRequest
     case missingResponseBody
     case failedToDecodeResponse(Error)

@@ -27,7 +27,7 @@ internal struct CreateVolumeRequest: DockerRequest {
         }
     }
 
-    let method: DockerRequest.Method = .POST
+    let method: DockerRequestMethod = .POST
     let endpoint: String = "volumes/create"
     let body: Body?
 }

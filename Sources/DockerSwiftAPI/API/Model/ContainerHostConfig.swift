@@ -74,6 +74,29 @@ extension Docker.Container {
             }
         }
 
+        public struct LogConfig: Codable, Sendable {
+            /// The logging driver used for a container.
+            /// `none` means logging is disabled.
+            public enum LogType: String, Codable, Sendable {
+                case local
+                case jsonFile = "json-file"
+                case syslog
+                case journald
+                case gelf
+                case fluentd
+                case awslogs
+                case splunk
+                case etwlogs
+                case none
+            }
+
+            public let type: LogType
+
+            private enum CodingKeys: String, CodingKey {
+                case type = "Type"
+            }
+        }
+
         /// An integer value representing this container's relative CPU weight versus other containers.
         public let cpuShares: Int?
 
@@ -106,6 +129,9 @@ extension Docker.Container {
         /// Gives the container full access to the host.
         public let privileged: Bool
 
+        /// The logging configuration for this container.
+        public let logConfig: LogConfig?
+
         public init(
             cpuShares: Int? = nil,
             memoryLimitBytes: Int64 = 0,
@@ -115,7 +141,8 @@ extension Docker.Container {
             restartPolicy: Docker.Container.RestartPolicy? = nil,
             autoRemove: Bool = false,
             dnsServers: [String]? = nil,
-            privileged: Bool = false
+            privileged: Bool = false,
+            logConfig: LogConfig? = nil
         ) {
             self.cpuShares = cpuShares
             self.memoryLimitBytes = memoryLimitBytes
@@ -135,6 +162,7 @@ extension Docker.Container {
             self.autoRemove = autoRemove
             self.dnsServers = dnsServers
             self.privileged = privileged
+            self.logConfig = logConfig
         }
 
 
@@ -148,6 +176,7 @@ extension Docker.Container {
             case autoRemove = "AutoRemove"
             case dnsServers = "Dns"
             case privileged = "Privileged"
+            case logConfig = "LogConfig"
         }
     }
 }

@@ -18,7 +18,7 @@ internal struct TagImageRequest: DockerRequest {
         let tag: String
     }
 
-    let method: DockerRequest.Method = .POST
+    let method: DockerRequestMethod = .POST
     let endpoint: String
     let query: Query?
 
