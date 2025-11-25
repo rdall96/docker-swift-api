@@ -32,6 +32,8 @@ struct DockerAPITests {
         client = DockerClient(connection: .defaultSocket)
     }
 
+    // MARK: - Info
+
     @Test
     func ping() async throws {
         #expect(await client.isAvailable)
@@ -47,6 +49,8 @@ struct DockerAPITests {
         #expect(version.apiVersion.minor == 51)
     }
 
+    // MARK: - Images
+
     @Test
     func fetchImages() async throws {
         let images = try await client.images
@@ -57,16 +61,22 @@ struct DockerAPITests {
 
     @Test
     func pullImageByTag() async throws {
-        let tag = Docker.Image.Tag(name: "hello-world", tag: "linux")
+        // https://hub.docker.com/layers/library/alpine/3.19/images/sha256-45470a1b6b2bb3c200494c9caff4796ad4379e8a9090d4f664cf7f6c5052cbd6
+        let tag = Docker.Image.Tag(name: "alpine", tag: "3.19")
         try await client.pullImage(with: tag)
-        _ = try #require(try await client.image(tag: tag))
+        let image = try #require(try await client.image(tag: tag))
+        #expect(image.tags.contains(tag))
     }
 
-    @Test(.disabled("Need a way to find images by digest"))
+    @Test(.disabled("Need a way to check the pulled image"))
     func pullImageByDigest() async throws {
-        let digest = "53cc1017c16ab2500aa5b5367e7650dbe2f753651d88792af1b522e5af328352"
-        try await client.pullImage(name: "hello-world", digest: digest)
-        _ = try #require(try await client.images.first { $0.id == digest })
+        // https://hub.docker.com/layers/library/alpine/3.21.5/images/sha256-ceddee90ef3513446902d9f65eb3ecd41849136a936e310c7192843632cea8a9
+        let digest = "5405e8f36ce1878720f71217d664aa3dea32e5e5df11acbf07fc78ef5661465b"
+        try await client.pullImage(name: "alpine", digest: digest)
+        print(try await client.images(name: "alpine").map(\.digests))
+        _ = try #require(try await client.images(name: "alpine").first {
+            $0.digests.contains("sha256:\(digest)")
+        })
     }
 
     @Test
@@ -75,7 +85,7 @@ struct DockerAPITests {
         let image = try await client.pullImage(with: tag)
 
         let newTag = Docker.Image.Tag(name: "docker-swift-api-tests", tag: "tagImage")
-        let newImage = try await client.tag(image: image, newTag)
+        let newImage = try await client.tag(image, tag: newTag)
 
         #expect(newImage.id == image.id)
         #expect(newImage.tags.count > image.tags.count)
@@ -85,10 +95,10 @@ struct DockerAPITests {
     func deleteImage() async throws {
         let tag = Docker.Image.Tag(name: "hello-world")
         try await client.pullImage(with: tag)
-        for image in try await client.images(withName: "hello-world") {
+        for image in try await client.images(name: "hello-world") {
             try await client.remove(image, force: true)
         }
-        #expect(try await client.images(withName: "hello-world").isEmpty)
+        #expect(try await client.images(name: "hello-world").isEmpty)
     }
 
     @Test
@@ -106,7 +116,7 @@ struct DockerAPITests {
         #expect(image.tags.contains(tag))
     }
 
-    @Test(.disabled("Requires an image and auth credentials"))
+    @Test(.disabled("Need somewhere to push to"))
     func pushImage() async throws {
         let image = try await client.pullImage(with: .init(name: "hello-world"))
 //        client.authentication = DockerAuthenticationContext(
@@ -122,6 +132,8 @@ struct DockerAPITests {
             // no-op
         }
     }
+
+    // MARK: - Volumes
 
     @Test
     func fetchVolumes() async throws {
@@ -141,6 +153,7 @@ struct DockerAPITests {
     func createVolume() async throws {
         let name = "docker-swift-api-tests-\(UUID().uuidString)"
         _ = try await client.createVolume(id: name)
+        _ = try #require(try await client.volume(id: name))
         _ = try await client.inspectVolume(id: name)
     }
 
@@ -152,10 +165,12 @@ struct DockerAPITests {
         #expect(try await client.volume(id: volume.id) == nil)
     }
 
+    // MARK: - Containers
+
     @Test
     func fetchContainers() async throws {
         let containers = try await client.containers()
-        #expect(!containers.isEmpty)
+        #expect(containers.isEmpty == false)
 
         // check that we requested the size information
         let container = try #require(containers.first)
@@ -164,20 +179,12 @@ struct DockerAPITests {
         #expect(try await client.containers(includeStopped: false).isEmpty)
     }
 
-    @Test(.disabled("Requires container ID"))
-    func fetchContainerProcesses() async throws {
-        let containerID = "a4ff1b8a2852be7ebe8275e918b4e8562e5f85597f3032339c651edac9981c6d"
-        let container = try #require(try await client.containers().first(where: { $0.id == containerID }))
-        let processes = try await client.processes(in: container)
-        #expect(!processes.isEmpty)
-    }
-
     @Test
     func createContainer() async throws {
-        try await client.pullImage(with: .init(name: "rdall96/minecraft-server"))
+        let image = try await client.pullImage(with: .init(name: "rdall96/minecraft-server"))
         let volume = try await client.createVolume()
         let config = Docker.Container.Config(
-            image: "rdall96/minecraft-server",
+            image: image.id,
             hostname: "docker-swift-api-tests",
             hostConfig: .init(
                 volumeMappings: [
@@ -190,24 +197,99 @@ struct DockerAPITests {
             env: .init([
                 "EULA": "true",
             ]),
-            tty: false
+            tty: true
         )
-        try await client.createContainer(name: "DockerSwiftAPITests", config)
+        let container = try await client.createContainer(name: "DockerSwiftAPITests", config: config)
 
         // Creating a container with the same name should throw an error
         do {
-            try await client.createContainer(name: "DockerSwiftAPITests", .init(image: "hello-world"))
+            try await client.createContainer(
+                name: "DockerSwiftAPITests",
+                config: .init(image: "hello-world")
+            )
             #expect(Bool(false), "Expected to throw")
         }
         catch {
             // no-op
         }
+
+        try await client.remove(container, force: true)
+    }
+
+    @Test
+    func renameContainer() async throws {
+        let image = try await client.pullImage(with: .init(name: "hello-world"))
+        let config = Docker.Container.Config(image: image.id)
+        var container = try await client.createContainer(config: config)
+        #expect(!container.names.contains(where: { $0.contains("/DockerSwiftAPITests") }))
+
+        try await client.renameContainer(container, name: "DockerSwiftAPITests")
+        container = try #require(try await client.container(name: "DockerSwiftAPITests"))
+        #expect(container.names.contains(where: { $0.contains("/DockerSwiftAPITests") }))
     }
 
     @Test
     func removeContainer() async throws {
-        let container = try #require(try await client.container(named: "DockerSwiftAPITests"))
+        let image = try await client.pullImage(with: .init(name: "hello-world"))
+        let config = Docker.Container.Config(image: image.id)
+        let container = try await client.createContainer(config: config)
         try await client.remove(container, pruneUnnamedVolumes: true)
-        #expect(try await client.container(named: "DockerSwiftAPITests") == nil)
+        #expect(try await client.container(name: try #require(container.names.first)) == nil)
+    }
+
+    @Test
+    func containerRun() async throws {
+        let image = try await client.pullImage(with: .init(name: "rdall96/minecraft-server"))
+        let config = Docker.Container.Config(
+            image: image.id,
+            env: .init([
+                "EULA": "true",
+            ])
+        )
+        let container = try await client.createContainer(config: config)
+
+        // Start
+        try await client.start(container)
+        try await Task.sleep(for: .seconds(1))
+
+        // Stop
+        try await client.stop(container)
+        try await Task.sleep(for: .milliseconds(250))
+    }
+
+    @Test
+    func containerLogs() async throws {
+        let image = try await client.pullImage(with: .init(name: "hello-world"))
+        let container = try await client.createContainer(config: .init(
+            image: image.id,
+            hostConfig: .init(
+                restartPolicy: .never,
+                logType: .jsonFile
+            ),
+            tty: true
+        ))
+        try await client.start(container)
+
+        let logs = try await client.logs(for: container)
+        print(logs)
+        #expect(logs.isEmpty == false)
+        #expect(logs.contains("Hello from Docker!"))
+    }
+
+    @Test
+    func containerProcesses() async throws {
+        let image = try await client.pullImage(with: .init(name: "rdall96/minecraft-server"))
+        let config = Docker.Container.Config(
+            image: image.id,
+            env: .init([
+                "EULA": "true",
+            ])
+        )
+        let container = try await client.createContainer(config: config)
+        try await client.start(container)
+        try await Task.sleep(for: .seconds(2))
+
+        let processes = try await client.processes(in: container)
+        #expect(!processes.isEmpty)
     }
 }

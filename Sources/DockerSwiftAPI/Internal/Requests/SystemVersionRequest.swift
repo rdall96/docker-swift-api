@@ -14,5 +14,5 @@ internal struct SystemVersionRequest: DockerRequest {
     typealias Body = Never
     typealias Response = Docker.SystemVersion
 
-    let endpoint: String = "/version"
+    let endpoint: String = "version"
 }

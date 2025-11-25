@@ -23,7 +23,7 @@ internal struct RemoveContainerRequest: DockerRequest {
     let query: Query?
 
     init(containerID: Docker.Container.ID, removeUnusedVolumes: Bool = false, force: Bool = false) {
-        endpoint = "/containers/\(containerID)"
+        endpoint = "containers/\(containerID)"
         query = .init(v: removeUnusedVolumes, force: force)
     }
 }

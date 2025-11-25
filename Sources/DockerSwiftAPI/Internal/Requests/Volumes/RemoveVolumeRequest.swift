@@ -22,7 +22,7 @@ internal struct RemoveVolumeRequest: DockerRequest {
     let query: Query?
 
     init(volumeID: Docker.Volume.ID, force: Bool = false) {
-        endpoint = "/volumes/\(volumeID)"
+        endpoint = "volumes/\(volumeID)"
         query = .init(force: force)
     }
 }

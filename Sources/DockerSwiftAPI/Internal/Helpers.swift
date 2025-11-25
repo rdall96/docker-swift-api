@@ -21,3 +21,13 @@ internal extension Date {
         UInt64(timeIntervalSince1970)
     }
 }
+
+internal extension UUID {
+    static func requestID() -> String {
+        UUID().uuidString
+            .lowercased()
+            .split(separator: "-")
+            .map(String.init)
+            .first ?? "-"
+    }
+}

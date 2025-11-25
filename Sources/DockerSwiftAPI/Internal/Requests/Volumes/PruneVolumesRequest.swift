@@ -16,7 +16,7 @@ internal struct PruneVolumesRequest: DockerRequest {
     }
 
     let method: DockerRequestMethod = .POST
-    let endpoint: String = "/volumes/prune"
+    let endpoint: String = "volumes/prune"
 //    let query: Query?
 
     struct Response: Decodable {

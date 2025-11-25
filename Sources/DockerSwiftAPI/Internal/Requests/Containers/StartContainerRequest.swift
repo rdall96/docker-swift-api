@@ -1,5 +1,5 @@
 //
-//  PauseContainerRequest.swift
+//  StartContainerRequest.swift
 //  docker-swift-api
 //
 //  Created by Ricky Dall'Armellina on 11/23/25.
@@ -7,8 +7,8 @@
 
 import Foundation
 
-/// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Container/operation/ContainerPause
-internal struct PauseContainerRequest: DockerRequest {
+/// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Container/operation/ContainerStart
+internal struct StartContainerRequest: DockerRequest {
     typealias Query = Never
     typealias Body = Never
     typealias Response = Void
@@ -17,6 +17,6 @@ internal struct PauseContainerRequest: DockerRequest {
     let endpoint: String
 
     init(containerID: Docker.Container.ID) {
-        endpoint = "/containers/\(containerID)/pause"
+        endpoint = "containers/\(containerID)/start"
     }
 }

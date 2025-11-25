@@ -36,8 +36,11 @@ extension Docker.Container {
         public struct HostPortInfo: Codable, Sendable {
             let hostPort: String
 
-            internal init(with map: Docker.Container.PortMap) {
-                self.hostPort = String(map.hostPort)
+            internal init?(with map: Docker.Container.PortMap) {
+                guard let port = map.hostPort else {
+                    return nil
+                }
+                self.hostPort = String(port)
             }
 
             private enum CodingKeys: String, CodingKey {
@@ -142,16 +145,17 @@ extension Docker.Container {
             autoRemove: Bool = false,
             dnsServers: [String]? = nil,
             privileged: Bool = false,
-            logConfig: LogConfig? = nil
+            logType: LogConfig.LogType? = nil
         ) {
             self.cpuShares = cpuShares
             self.memoryLimitBytes = memoryLimitBytes
             self.reservedMemoryBytes = reservedMemoryBytes
             self.volumeMappings = volumeMappings
             self.portMappings = portMappings.reduce(into: PortMappings()) { result, portMap in
-                result[portMap.containerPortDescription] = [
-                    HostPortInfo(with: portMap)
-                ]
+                guard let map = HostPortInfo(with: portMap) else {
+                    return
+                }
+                result[portMap.containerPortDescription] = [map]
             }
             if let restartPolicy {
                 restartPolicyConfig = .init(rawValue: restartPolicy)
@@ -162,7 +166,12 @@ extension Docker.Container {
             self.autoRemove = autoRemove
             self.dnsServers = dnsServers
             self.privileged = privileged
-            self.logConfig = logConfig
+            if let logType {
+                logConfig = .init(type: logType)
+            }
+            else {
+                logConfig = nil
+            }
         }
 
 

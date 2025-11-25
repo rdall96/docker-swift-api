@@ -39,7 +39,7 @@ internal struct PushImageRequest: DockerRequest {
             throw DockerError.unknown
         }
 
-        endpoint = "/images/\(imageName)/push"
+        endpoint = "images/\(imageName)/push"
         query = .init(tag: tag?.tag)
         authContext = auth
     }

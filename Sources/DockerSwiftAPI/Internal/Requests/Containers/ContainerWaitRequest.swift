@@ -17,7 +17,7 @@ internal struct ContainerWaitRequest: DockerRequest {
     let endpoint: String
 
     init(containerID: Docker.Container.ID) {
-        endpoint = "/containers/\(containerID)/wait"
+        endpoint = "containers/\(containerID)/wait"
     }
 
     struct Response: Decodable {

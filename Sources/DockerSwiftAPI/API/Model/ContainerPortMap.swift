@@ -18,7 +18,8 @@ extension Docker.Container {
         }
 
         /// Port exposed on the host.
-        public let hostPort: UInt16
+        /// `nil` if no port has been mapped.
+        public let hostPort: UInt16?
 
         /// Port on the container.
         public let containerPort: UInt16
@@ -41,6 +42,6 @@ extension Docker.Container {
 
 extension Docker.Container.PortMap: CustomStringConvertible {
     public var description: String {
-        "\(hostPort):\(containerPort)/\(type.rawValue)"
+        "\(hostPort?.formatted() ?? "-"):\(containerPort)/\(type.rawValue)"
     }
 }

@@ -12,14 +12,19 @@ import Foundation
 internal struct CreateContainerRequest: DockerRequest {
     typealias Config = Docker.Container.Config
 
-    struct Metadata: Encodable {
+    struct Query: Encodable {
         let name: String?
     }
 
     let method: DockerRequestMethod = .POST
-    let endpoint: String = "/containers/create"
-    let query: Metadata?
+    let endpoint: String = "containers/create"
+    let query: Query?
     let body: Config?
+
+    init(name: String? = nil, config: Config) {
+        query = .init(name: name ?? "") // default to an empty string if no name, Docker will automatically assign a name
+        body = config
+    }
 
     struct Response: Decodable {
         let id: Docker.Container.ID

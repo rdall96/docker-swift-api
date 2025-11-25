@@ -32,6 +32,12 @@ public final class DockerClient {
         self.connection = connection
         self.timeout = timeout
         self.logger = logger ?? Logger(label: "docker-\(connection.description)")
+
+        #if DEBUG
+        self.logger.logLevel = .debug
+        #else
+        self.logger.logLevel = .notice
+        #endif
     }
 
     // MARK: - Run methods
@@ -46,7 +52,14 @@ public final class DockerClient {
         return
     }
 
-    @discardableResult
+    internal func run<T: DockerRequest>(_ request: T) async throws -> T.Response where T.Response == String {
+        let response = try await runner.run(request, timeout: timeout)
+        guard let data = response.body else {
+            throw DockerError.missingResponseBody
+        }
+        return String(buffer: data)
+    }
+
     internal func run<T: DockerRequest>(_ request: T) async throws -> T.Response where T.Response : Decodable {
         let response = try await runner.run(request, timeout: timeout)
         guard let data = response.body else {

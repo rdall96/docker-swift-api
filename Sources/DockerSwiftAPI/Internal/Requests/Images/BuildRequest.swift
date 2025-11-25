@@ -31,7 +31,7 @@ internal struct BuildImageRequest: DockerRequest {
     }
 
     let method: DockerRequestMethod = .POST
-    let endpoint: String = "/build"
+    let endpoint: String = "build"
     let query: Query?
     let body: Data?
     let contentType: ContentType = .tar

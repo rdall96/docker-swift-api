@@ -22,7 +22,7 @@ internal struct RestartContainerRequest: DockerRequest {
     let query: Query?
 
     init(containerID: Docker.Container.ID, query: Query?) {
-        endpoint = "/containers/\(containerID)/restart"
+        endpoint = "containers/\(containerID)/restart"
         self.query = query
     }
 }

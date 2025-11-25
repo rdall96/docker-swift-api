@@ -17,6 +17,6 @@ internal struct InspectVolumeRequest: DockerRequest {
     let endpoint: String
 
     init(volumeID: Docker.Volume.ID) {
-        endpoint = "/volumes/\(volumeID)"
+        endpoint = "volumes/\(volumeID)"
     }
 }

@@ -23,4 +23,5 @@ public enum DockerError: Error {
     case invalidTag
     case containerAlreadyExists
     case containerNotFound
+    case containerNotRunning
 }

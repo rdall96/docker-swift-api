@@ -13,5 +13,5 @@ internal struct PingRequest: DockerRequest {
     typealias Body = Never
     typealias Response = Void
 
-    let endpoint: String = "/_ping"
+    let endpoint: String = "_ping"
 }

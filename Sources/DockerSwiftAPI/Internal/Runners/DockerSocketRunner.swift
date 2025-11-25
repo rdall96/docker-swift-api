@@ -23,8 +23,6 @@ internal final class DockerSocketRunner: DockerRunner {
         self.socket = socket
         self.client = HTTPClient(eventLoopGroupProvider: .singleton)
         self.logger = logger
-
-//        client.configuration.tlsConfiguration = .makeServerConfigurationWithMTLS(certificateChain: <#T##[NIOSSLCertificateSource]#>, privateKey: .privateKey(.), trustRoots: .)
     }
 
     /// The HTTPClient must be shutdown properly to avoid crashes.
@@ -79,6 +77,6 @@ fileprivate extension HTTPClient {
             throw HTTPClientError.invalidURL
         }
         let request = try Request(url: url, method: method, headers: headers, body: body)
-        return try await execute(request: request, deadline: deadline, logger: Logger(label: "HTTPClient (socket)")).get()
+        return try await execute(request: request, deadline: deadline).get()
     }
 }

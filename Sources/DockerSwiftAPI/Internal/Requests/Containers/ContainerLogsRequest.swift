@@ -10,7 +10,7 @@ import Foundation
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Container/operation/ContainerLogs
 internal struct ContainerLogsRequest: DockerRequest {
     typealias Body = Never
-    typealias Response = Void
+    typealias Response = String
 
     struct Query: Encodable {
         let follow: Bool = false
@@ -26,9 +26,7 @@ internal struct ContainerLogsRequest: DockerRequest {
     let query: Query?
 
     init(containerID: Docker.Container.ID, query: Query) {
-        endpoint = "/containers/\(containerID)/logs"
+        endpoint = "containers/\(containerID)/logs"
         self.query = query
     }
-
-    // FIXME: Missing response
 }

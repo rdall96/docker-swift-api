@@ -13,7 +13,7 @@ internal struct FetchVolumesRequest: DockerRequest {
     typealias Query = Never
     typealias Body = Never
 
-    let endpoint: String = "/volumes"
+    let endpoint: String = "volumes"
 
     struct Response: Decodable {
         let volumes: [Docker.Volume]

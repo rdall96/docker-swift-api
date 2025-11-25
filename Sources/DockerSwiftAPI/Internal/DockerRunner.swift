@@ -27,7 +27,8 @@ extension DockerRunner {
 
     @discardableResult
     func run<Request: DockerRequest>(_ request: Request, timeout: Int64?) async throws -> HTTPClient.Response {
-        logger.debug("Starting \(type(of: request))")
+        let requestID = UUID.requestID()
+        logger.debug("[\(requestID)] Starting \(type(of: request))")
 
         // Build the path
         let requestPath: String
@@ -43,7 +44,7 @@ extension DockerRunner {
                 .replacingOccurrences(of: "\", \"", with: "\",\"")
         }
         catch {
-            logger.error("Failed to encode request path: \(error)")
+            logger.error("[\(requestID)] Failed to encode request path: \(error)")
             throw DockerError.invalidRequest
         }
 
@@ -58,12 +59,12 @@ extension DockerRunner {
                     requestBody = .data(try JSONEncoder().encode(encodable))
                 }
                 catch {
-                    logger.error("Failed to encode request body \(type(of: encodable)): \(error)")
+                    logger.error("[\(requestID)] Failed to encode request body \(type(of: encodable)): \(error)")
                     throw DockerError.invalidRequest
                 }
             }
             else {
-                logger.error("Unsupported request body type \(type(of: body))")
+                logger.error("[\(requestID)] Unsupported request body type \(type(of: body))")
                 throw DockerError.invalidRequest
             }
         }
@@ -71,6 +72,7 @@ extension DockerRunner {
         // Setup headers
         var headers = HTTPHeaders()
         headers.add(name: "Content-Type", value: request.contentType.rawValue)
+        headers.add(name: "Accept", value: "application/*")
 
         if let authContext = request.authContext {
             // encode auth
@@ -79,7 +81,7 @@ extension DockerRunner {
                 headers.add(name: "X-Registry-Auth", value: token)
             }
             catch {
-                logger.error("Failed to encode authentication context: \(error)")
+                logger.error("[\(requestID)] Failed to encode authentication context: \(error)")
                 throw DockerError.invalidRequest
             }
         }
@@ -87,7 +89,7 @@ extension DockerRunner {
         // Run the request
         let response: HTTPClient.Response
         do {
-            logger.debug("[\(request.method.rawValue)] \(requestPath)")
+            logger.debug("[\(requestID)] \(request.method.rawValue) \(requestPath)")
             response = try await self.response(
                 for: requestPath,
                 method: request.method.httpMethod,
@@ -101,34 +103,34 @@ extension DockerRunner {
                 throw DockerError.requestTimedOut
             }
             else {
-                logger.error("Request failed: \(error)")
+                logger.error("[\(requestID)] Request failed: \(error)")
                 throw DockerError.connectionError(error)
             }
         }
         catch {
-            logger.error("Request failed: \(error)")
+            logger.error("[\(requestID)] Request failed: \(error)")
             throw DockerError.connectionError(error)
         }
 
         // Check response status
         switch response.status {
         case .ok, .created, .accepted, .noContent:
-            logger.debug("Successful response: \(response.status.code)")
+            logger.debug("[\(requestID)] Successful: \(response.status.code)")
             return response
         case .notModified:
-            logger.warning("Ignored request: \(response.description)")
+            logger.warning("[\(requestID)] Ignored request: \(response.description)")
             throw DockerError.ignoredRequest
-        case .badRequest, .forbidden, .notFound, .methodNotAllowed, .payloadTooLarge, .unsupportedMediaType:
-            logger.error("Request failed! \(response.description)")
+        case .badRequest, .forbidden, .notFound, .methodNotAllowed, .conflict, .payloadTooLarge, .unsupportedMediaType:
+            logger.error("[\(requestID)] Request failed: \(response.description)")
             throw DockerError.invalidRequest
         case .unauthorized:
-            logger.warning("Not authenticated!")
+            logger.warning("[\(requestID)] Not authenticated!")
             throw DockerError.notAuthenticated
         case .internalServerError, .notImplemented, .badGateway, .serviceUnavailable, .gatewayTimeout:
             logger.critical("\(response.description)")
             throw DockerError.connectionError(NSError(domain: "Docker", code: Int(response.status.code)))
         default:
-            logger.error("[\(type(of: request))] Request failed due to an unknown error! \(response.description)")
+            logger.error("[\(requestID)] Request failed due to an unknown error: \(response.description)")
             throw DockerError.unknown
         }
     }

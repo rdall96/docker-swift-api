@@ -16,7 +16,7 @@ internal struct ContainerProcessesRequest: DockerRequest {
     let endpoint: String
 
     init(id: Docker.Container.ID) {
-        endpoint = "/containers/\(id)/top"
+        endpoint = "containers/\(id)/top"
     }
 
     struct Response: Decodable {

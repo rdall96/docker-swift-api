@@ -21,7 +21,7 @@ internal struct KillContainerRequest: DockerRequest {
     let query: Query?
 
     init(containerID: Docker.Container.ID, signal: String) {
-        endpoint = "/containers/\(containerID)/kill"
+        endpoint = "containers/\(containerID)/kill"
         query = .init(signal: signal)
     }
 }

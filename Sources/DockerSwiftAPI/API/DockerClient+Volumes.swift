@@ -58,7 +58,8 @@ extension DockerClient {
 
     /// Delete unused volumes.
     /// Returns a list of the deleted volume IDs.
-    public func pruneVolumes() async throws -> [Docker.Volume.ID] {
-        try await run(PruneVolumesRequest()).deleted
-    }
+    // FIXME: The prune request fails
+//    public func pruneVolumes() async throws -> [Docker.Volume.ID] {
+//        try await run(PruneVolumesRequest()).deleted
+//    }
 }

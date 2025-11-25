@@ -10,9 +10,21 @@ import Foundation
 /// Fetch all local Docker images.
 /// https://docs.docker.com/reference/api/engine/version/v1.51/#tag/Image/operation/ImageList
 internal struct FetchImagesRequest: DockerRequest {
-    typealias Query = Never
     typealias Body = Never
     typealias Response = [Docker.Image]
 
-    let endpoint: String = "/images/json"
+    struct Query: Encodable {
+        let sharedSize: Bool = true
+        let digests: Bool = true
+        let manifests: Bool = true
+
+        private enum CodingKeys: String, CodingKey {
+            case sharedSize = "shared-size"
+            case digests
+            case manifests
+        }
+    }
+
+    let endpoint: String = "images/json"
+    let query: Query? = .init()
 }

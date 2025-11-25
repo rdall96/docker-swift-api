@@ -28,6 +28,10 @@ extension DockerClient {
 
     /// List processes running inside a container.
     public func processes(in container: Docker.Container) async throws -> [Docker.Container.Process] {
+        // Ensure the container is running
+        guard case .running = container.state else {
+            throw DockerError.containerNotRunning
+        }
         let request = ContainerProcessesRequest(id: container.id)
         return try await run(request).processes.compactMap {
             try Docker.Container.Process($0)
@@ -35,14 +39,14 @@ extension DockerClient {
     }
 
     /// Get stdout and stderr logs from a container.
-    /// - NOTE: This endpoint works only for containers with the `json-file` or `journald` logging driver.
+    /// - NOTE: This endpoint works best when the container logging driver is set to `json-file` or `journald` and **tty** is enabled.
     public func logs(
         for container: Docker.Container,
         since: Date? = nil,
         until: Date? = nil,
         addTimestamps: Bool = false,
         tail: UInt? = nil
-    ) async throws {
+    ) async throws -> String {
         let request = ContainerLogsRequest(
             containerID: container.id,
             query: .init(
@@ -68,10 +72,7 @@ extension DockerClient {
             throw DockerError.containerAlreadyExists
         }
 
-        let request = CreateContainerRequest(
-            query: .init(name: name),
-            body: config
-        )
+        let request = CreateContainerRequest(name: name, config: config)
         let id = try await run(request).id
 
         guard let container = try await containers(includeStopped: true).first(where: { $0.id == id }) else {

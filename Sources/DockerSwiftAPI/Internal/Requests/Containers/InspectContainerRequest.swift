@@ -17,6 +17,6 @@ import Foundation
 //    let endpoint: String
 //
 //    init(containerID: Docker.Container.ID) {
-//        endpoint = "/containers/\(containerID)/json"
+//        endpoint = "containers/\(containerID)/json"
 //    }
 //}

@@ -22,7 +22,7 @@ internal struct StopContainerRequest: DockerRequest {
     let query: Query?
 
     init(containerID: Docker.Container.ID, query: Query?) {
-        endpoint = "/containers/\(containerID)/stop"
+        endpoint = "containers/\(containerID)/stop"
         self.query = query
     }
 }

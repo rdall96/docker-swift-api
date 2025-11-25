@@ -21,7 +21,7 @@ internal struct RenameContainerRequest: DockerRequest {
     let query: Query?
 
     init(containerID: Docker.Container.ID, name: String) {
-        endpoint = "/containers/\(containerID)/rename"
+        endpoint = "containers/\(containerID)/rename"
         query = .init(name: name)
     }
 }

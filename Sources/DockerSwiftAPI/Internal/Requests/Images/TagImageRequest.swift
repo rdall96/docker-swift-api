@@ -23,7 +23,7 @@ internal struct TagImageRequest: DockerRequest {
     let query: Query?
 
     init(imageID: String, newTag: Docker.Image.Tag) {
-        endpoint = "/images/\(imageID)/tag"
+        endpoint = "images/\(imageID)/tag"
         query = .init(repo: newTag.name, tag: newTag.tag)
     }
 }

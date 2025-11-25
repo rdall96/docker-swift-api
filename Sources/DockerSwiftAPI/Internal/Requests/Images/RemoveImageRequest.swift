@@ -28,7 +28,7 @@ internal struct RemoveImageRequest: DockerRequest {
     let query: Query?
 
     init(imageID: String, force: Bool = false, prune: Bool = false) {
-        endpoint = "/images/\(imageID)"
+        endpoint = "images/\(imageID)"
         query = .init(force: force, noPrune: !prune)
     }
 }
