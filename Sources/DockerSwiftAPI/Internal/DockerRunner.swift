@@ -146,3 +146,49 @@ fileprivate extension HTTPClient.Response {
         }
     }
 }
+
+fileprivate extension DockerConnection {
+    func runner(logger: Logger) -> DockerRunner {
+        switch self {
+        case .socket(let path): DockerSocketRunner(path, logger: logger)
+        case .server(let host): DockerServerRunner(host: host, logger: logger)
+        }
+    }
+}
+
+// MARK: - Run methods
+
+extension Docker {
+    private var runner: DockerRunner {
+        connection.runner(logger: logger)
+    }
+
+    @discardableResult
+    internal func run<T: DockerRequest>(_ request: T) async throws -> T.Response where T.Response == Void {
+        try await runner.run(request, timeout: timeout)
+        return
+    }
+
+    internal func run<T: DockerRequest>(_ request: T) async throws -> T.Response where T.Response == String {
+        let response = try await runner.run(request, timeout: timeout)
+        guard let data = response.body else {
+            throw DockerError.missingResponseBody
+        }
+        return String(buffer: data)
+    }
+
+    internal func run<T: DockerRequest>(_ request: T) async throws -> T.Response where T.Response : Decodable {
+        let response = try await runner.run(request, timeout: timeout)
+        guard let data = response.body else {
+            throw DockerError.missingResponseBody
+        }
+
+        // Decode the response body
+        do {
+            return try JSONDecoder().decode(T.Response.self, from: data)
+        }
+        catch {
+            throw DockerError.failedToDecodeResponse(error)
+        }
+    }
+}

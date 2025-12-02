@@ -26,10 +26,10 @@ fileprivate let localhostConnection: DockerConnection = .localhost(
 
 struct DockerAPITests {
 
-    let client: DockerClient
+    let client: Docker
 
     init() {
-        client = DockerClient(connection: .defaultSocket)
+        client = Docker(connection: .defaultSocket)
     }
 
     // MARK: - Info
