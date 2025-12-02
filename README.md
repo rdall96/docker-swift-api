@@ -1,11 +1,8 @@
 # DockerSwiftAPI
 
 [![Latest Release](https://gitlab.com/rdall96/docker-swift/-/badges/release.svg)](https://gitlab.com/rdall96/docker-swift/-/releases)
-
 [![License](https://img.shields.io/badge/LICENSE-MIT-orange)](https://gitlab.com/rdall96/docker-swift/-/blob/main/LICENSE)
-
 ![Platform](https://img.shields.io/badge/platforms-macOS%2014.0-blue)
-
 [![CI Status](https://gitlab.com/rdall96/docker-swift/badges/main/pipeline.svg)](https://gitlab.com/rdall96/docker-swift/-/commits/main)
 
 `DockerSwiftAPI` is a library to interface with the Docker API and run actions on images, volumes, containers, and more!
