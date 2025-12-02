@@ -8,7 +8,10 @@
 import Foundation
 import Logging
 
-/// An instance of a Docker client, which provides methods to communicate with the Docker Engine and perform actions on images, containers, volumes, etc...
+/// Interact with the Docker Engine on a given connection.
+///
+/// Creating an instance of this class provides methods to communicate with the Docker Engine API and perform actions on images, containers, volumes, etc....
+/// By default, this attaches to the local Docker socket at `/var/run/docker.sock`, but you can specify an alternative `DockerConnection`.
 public final class Docker {
     public typealias RequestTimeout = Int64
 

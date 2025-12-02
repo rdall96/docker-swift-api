@@ -10,6 +10,8 @@ import AsyncHTTPClient
 
 // MARK: - API Endpoints
 
+/// Interact with the default DockerHub server.
+/// - WARNING: This functionality will be removed in a future release and replaced with a more configurable Registry API.
 public enum DockerHub {
     public typealias Namespace = String
     
